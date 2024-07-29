@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/database");
 const routes = require("./routes");
 const { saveMessage } = require("./controllers/messageController");
+const User = require("./models/User");
 
 dotenv.config();
 
@@ -44,14 +45,21 @@ io.on("connection", (socket) => {
     console.log(`User left room: ${room}`);
   });
 
-  socket.on("chatMessage", async (data) => {
+  socket.on("chatMessage", async (data, tempMessageId) => {
     try {
       const savedMessage = await saveMessage({
         sender: data.userId,
         room: data.room,
         content: data.content,
       });
-      io.to(data.room).emit("message", savedMessage);
+
+      await savedMessage.populate("sender", "username");
+
+      // Emit the message to all clients in the room except the sender
+      socket.to(data.room).emit("message", savedMessage);
+
+      // Emit a confirmation to the sender with the tempMessageId
+      socket.emit("messageConfirmation", savedMessage, tempMessageId);
     } catch (error) {
       console.error("Error saving message:", error);
     }

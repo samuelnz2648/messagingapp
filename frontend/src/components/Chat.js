@@ -26,6 +26,7 @@ function Chat() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      console.log("Fetched messages:", response.data); // Add this line for debugging
       setMessages(response.data);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -55,8 +56,26 @@ function Chat() {
       setConnected(false);
     });
 
-    socket.on("message", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+    socket.on("message", (message, tempMessageId) => {
+      setMessages((prevMessages) => {
+        if (tempMessageId) {
+          // Replace the temporary message with the confirmed one
+          return prevMessages.map((msg) =>
+            msg._id === tempMessageId ? message : msg
+          );
+        } else {
+          // It's a message from another user, add it to the list
+          return [...prevMessages, message];
+        }
+      });
+    });
+
+    socket.on("messageConfirmation", (confirmedMessage, tempMessageId) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg._id === tempMessageId ? confirmedMessage : msg
+        )
+      );
     });
 
     fetchUsername();
@@ -65,6 +84,7 @@ function Chat() {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("message");
+      socket.off("messageConfirmation");
       socket.disconnect();
     };
   }, [room, navigate, fetchMessages]);
@@ -97,23 +117,25 @@ function Chat() {
         userId: localStorage.getItem("userId"),
         room: room,
         content: inputMessage.trim(),
-        username: username,
       };
 
-      let tempMessageId = Date.now().toString();
+      const tempMessageId = `temp-${Date.now()}`;
 
       try {
         // Optimistically add the message to the UI
-        const tempMessage = { ...messageData, _id: tempMessageId };
+        const tempMessage = {
+          _id: tempMessageId,
+          sender: { _id: localStorage.getItem("userId"), username: username },
+          room: room,
+          content: inputMessage.trim(),
+          timestamp: new Date().toISOString(),
+        };
         setMessages((prevMessages) => [...prevMessages, tempMessage]);
         setInputMessage("");
         scrollToBottom();
 
         // Send the message to the server
-        await socket.emit("chatMessage", messageData);
-
-        // If successful, the server will broadcast the message back to all clients,
-        // including the sender, so we don't need to update the state here again
+        await socket.emit("chatMessage", messageData, tempMessageId);
       } catch (error) {
         console.error("Error sending message:", error);
         // Remove the temporary message if sending failed
@@ -121,7 +143,7 @@ function Chat() {
           prevMessages.filter((msg) => msg._id !== tempMessageId)
         );
         alert("Failed to send message. Please try again.");
-        setInputMessage(messageData.content); // Restore the unsent message to the input
+        setInputMessage(messageData.content);
       } finally {
         setIsSending(false);
       }
@@ -160,10 +182,10 @@ function Chat() {
           <div
             key={index}
             className={`message ${
-              msg.username === username ? "own-message" : ""
+              msg.sender.username === username ? "own-message" : ""
             }`}
           >
-            <strong>{msg.username}: </strong>
+            <strong>{msg.sender.username}: </strong>
             {msg.content}
           </div>
         ))}
