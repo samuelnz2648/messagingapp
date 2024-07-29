@@ -4,8 +4,54 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import io from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
 
 let socket;
+
+const ChatContainer = styled.div.attrs({
+  className: "flex flex-col h-screen bg-gray-100"
+})``;
+
+const ChatHeader = styled.div.attrs({
+  className: "bg-blue-600 text-white p-4 flex justify-between items-center"
+})``;
+
+const RoomSelector = styled.div.attrs({
+  className: "bg-gray-200 p-2 flex space-x-2"
+})``;
+
+const RoomButton = styled.button.attrs({
+  className: "px-4 py-2 bg-white rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+})``;
+
+const MessagesContainer = styled.div.attrs({
+  className: "flex-grow overflow-y-auto p-4 space-y-2"
+})``;
+
+const Message = styled.div.attrs({
+  className: "bg-white rounded-lg p-2 shadow"
+})`
+  &.own-message {
+    background-color: #e6f3ff;
+    margin-left: auto;
+  }
+`;
+
+const MessageForm = styled.form.attrs({
+  className: "flex p-4 bg-white"
+})``;
+
+const MessageInput = styled.input.attrs({
+  className: "flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+})``;
+
+const SendButton = styled.button.attrs({
+  className: "bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+})``;
+
+const ConnectionStatus = styled.div.attrs({
+  className: "bg-red-500 text-white p-2 text-center"
+})``;
 
 function Chat() {
   const [messages, setMessages] = useState([]);
@@ -26,7 +72,7 @@ function Chat() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("Fetched messages:", response.data); // Add this line for debugging
+      console.log("Fetched messages:", response.data);
       setMessages(response.data);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -59,12 +105,10 @@ function Chat() {
     socket.on("message", (message, tempMessageId) => {
       setMessages((prevMessages) => {
         if (tempMessageId) {
-          // Replace the temporary message with the confirmed one
           return prevMessages.map((msg) =>
             msg._id === tempMessageId ? message : msg
           );
         } else {
-          // It's a message from another user, add it to the list
           return [...prevMessages, message];
         }
       });
@@ -122,7 +166,6 @@ function Chat() {
       const tempMessageId = `temp-${Date.now()}`;
 
       try {
-        // Optimistically add the message to the UI
         const tempMessage = {
           _id: tempMessageId,
           sender: { _id: localStorage.getItem("userId"), username: username },
@@ -134,11 +177,9 @@ function Chat() {
         setInputMessage("");
         scrollToBottom();
 
-        // Send the message to the server
         await socket.emit("chatMessage", messageData, tempMessageId);
       } catch (error) {
         console.error("Error sending message:", error);
-        // Remove the temporary message if sending failed
         setMessages((prevMessages) =>
           prevMessages.filter((msg) => msg._id !== tempMessageId)
         );
@@ -165,50 +206,53 @@ function Chat() {
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <h2>Chat Room: {room}</h2>
-        <div>
+    <ChatContainer>
+      <ChatHeader>
+        <h2 className="text-xl font-bold">Chat Room: {room}</h2>
+        <div className="flex items-center space-x-4">
           <span>Logged in as: {username}</span>
-          <button onClick={logout}>Logout</button>
+          <button
+            onClick={logout}
+            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
         </div>
-      </div>
-      <div className="room-selector">
-        <button onClick={() => handleRoomChange("general")}>General</button>
-        <button onClick={() => handleRoomChange("random")}>Random</button>
-      </div>
-      <div className="messages-container">
+      </ChatHeader>
+      <RoomSelector>
+        <RoomButton onClick={() => handleRoomChange("general")}>General</RoomButton>
+        <RoomButton onClick={() => handleRoomChange("random")}>Random</RoomButton>
+      </RoomSelector>
+      <MessagesContainer>
         {messages.map((msg, index) => (
-          <div
+          <Message
             key={index}
-            className={`message ${
-              msg.sender.username === username ? "own-message" : ""
-            }`}
+            className={msg.sender.username === username ? "own-message" : ""}
           >
             <strong>{msg.sender.username}: </strong>
             {msg.content}
-          </div>
+          </Message>
         ))}
         <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={sendMessage} className="message-form">
-        <input
+      </MessagesContainer>
+      <MessageForm onSubmit={sendMessage}>
+        <MessageInput
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder="Type a message..."
           disabled={isSending}
         />
-        <button type="submit" disabled={!connected || isSending}>
+        <SendButton type="submit" disabled={!connected || isSending}>
           {isSending ? "Sending..." : "Send"}
-        </button>
-      </form>
+        </SendButton>
+      </MessageForm>
       {!connected && (
-        <div className="connection-status">
+        <ConnectionStatus>
           Disconnected. Trying to reconnect...
-        </div>
+        </ConnectionStatus>
       )}
-    </div>
+    </ChatContainer>
   );
 }
 
