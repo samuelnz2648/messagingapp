@@ -24,11 +24,28 @@ export const MessagesContainer = styled.div.attrs({
 })``;
 
 export const Message = styled.div.attrs({
-  className: "bg-white rounded-lg p-2 shadow",
+  className: "bg-white rounded-lg p-2 shadow relative",
 })`
   &.own-message {
     background-color: #e6f3ff;
     margin-left: auto;
+  }
+
+  .message-actions {
+    display: none;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+  }
+
+  &:hover .message-actions {
+    display: flex;
+  }
+
+  .edited-tag {
+    font-size: 0.8em;
+    color: #888;
+    margin-left: 5px;
   }
 `;
 
@@ -52,4 +69,13 @@ export const ConnectionStatus = styled.div.attrs({
 
 export const LogoutButton = styled.button.attrs({
   className: "bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600",
+})``;
+
+export const EditButton = styled.button.attrs({
+  className:
+    "bg-yellow-500 text-white px-2 py-1 rounded text-xs mr-1 hover:bg-yellow-600",
+})``;
+
+export const DeleteButton = styled.button.attrs({
+  className: "bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600",
 })``;
