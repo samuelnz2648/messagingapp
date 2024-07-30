@@ -9,27 +9,28 @@ import styled from "styled-components";
 let socket;
 
 const ChatContainer = styled.div.attrs({
-  className: "flex flex-col h-screen bg-gray-100"
+  className: "flex flex-col h-screen bg-gray-100",
 })``;
 
 const ChatHeader = styled.div.attrs({
-  className: "bg-blue-600 text-white p-4 flex justify-between items-center"
+  className: "bg-blue-600 text-white p-4 flex justify-between items-center",
 })``;
 
 const RoomSelector = styled.div.attrs({
-  className: "bg-gray-200 p-2 flex space-x-2"
+  className: "bg-gray-200 p-2 flex space-x-2",
 })``;
 
 const RoomButton = styled.button.attrs({
-  className: "px-4 py-2 bg-white rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  className:
+    "px-4 py-2 bg-white rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500",
 })``;
 
 const MessagesContainer = styled.div.attrs({
-  className: "flex-grow overflow-y-auto p-4 space-y-2"
+  className: "flex-grow overflow-y-auto p-4 space-y-2",
 })``;
 
 const Message = styled.div.attrs({
-  className: "bg-white rounded-lg p-2 shadow"
+  className: "bg-white rounded-lg p-2 shadow",
 })`
   &.own-message {
     background-color: #e6f3ff;
@@ -38,19 +39,21 @@ const Message = styled.div.attrs({
 `;
 
 const MessageForm = styled.form.attrs({
-  className: "flex p-4 bg-white"
+  className: "flex p-4 bg-white",
 })``;
 
 const MessageInput = styled.input.attrs({
-  className: "flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  className:
+    "flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
 })``;
 
 const SendButton = styled.button.attrs({
-  className: "bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  className:
+    "bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500",
 })``;
 
 const ConnectionStatus = styled.div.attrs({
-  className: "bg-red-500 text-white p-2 text-center"
+  className: "bg-red-500 text-white p-2 text-center",
 })``;
 
 function Chat() {
@@ -102,24 +105,17 @@ function Chat() {
       setConnected(false);
     });
 
-    socket.on("message", (message, tempMessageId) => {
+    socket.on("message", (message) => {
       setMessages((prevMessages) => {
-        if (tempMessageId) {
-          return prevMessages.map((msg) =>
-            msg._id === tempMessageId ? message : msg
-          );
-        } else {
+        // Check if the message already exists in the state
+        const messageExists = prevMessages.some(
+          (msg) => msg._id === message._id
+        );
+        if (!messageExists) {
           return [...prevMessages, message];
         }
+        return prevMessages;
       });
-    });
-
-    socket.on("messageConfirmation", (confirmedMessage, tempMessageId) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg._id === tempMessageId ? confirmedMessage : msg
-        )
-      );
     });
 
     fetchUsername();
@@ -128,7 +124,6 @@ function Chat() {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("message");
-      socket.off("messageConfirmation");
       socket.disconnect();
     };
   }, [room, navigate, fetchMessages]);
@@ -157,34 +152,17 @@ function Chat() {
     e.preventDefault();
     if (inputMessage.trim() && connected && !isSending) {
       setIsSending(true);
-      const messageData = {
-        userId: localStorage.getItem("userId"),
-        room: room,
-        content: inputMessage.trim(),
-      };
-
-      const tempMessageId = `temp-${Date.now()}`;
 
       try {
-        const tempMessage = {
-          _id: tempMessageId,
-          sender: { _id: localStorage.getItem("userId"), username: username },
+        await socket.emit("chatMessage", {
           room: room,
           content: inputMessage.trim(),
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prevMessages) => [...prevMessages, tempMessage]);
+        });
         setInputMessage("");
         scrollToBottom();
-
-        await socket.emit("chatMessage", messageData, tempMessageId);
       } catch (error) {
         console.error("Error sending message:", error);
-        setMessages((prevMessages) =>
-          prevMessages.filter((msg) => msg._id !== tempMessageId)
-        );
         alert("Failed to send message. Please try again.");
-        setInputMessage(messageData.content);
       } finally {
         setIsSending(false);
       }
@@ -202,6 +180,8 @@ function Chat() {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    setUsername("");
+    setMessages([]);
     navigate("/login");
   };
 
@@ -220,8 +200,12 @@ function Chat() {
         </div>
       </ChatHeader>
       <RoomSelector>
-        <RoomButton onClick={() => handleRoomChange("general")}>General</RoomButton>
-        <RoomButton onClick={() => handleRoomChange("random")}>Random</RoomButton>
+        <RoomButton onClick={() => handleRoomChange("general")}>
+          General
+        </RoomButton>
+        <RoomButton onClick={() => handleRoomChange("random")}>
+          Random
+        </RoomButton>
       </RoomSelector>
       <MessagesContainer>
         {messages.map((msg, index) => (

@@ -5,6 +5,7 @@ const http = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const jwt = require("jsonwebtoken");
 const connectDB = require("./config/database");
 const routes = require("./routes");
 const { saveMessage } = require("./controllers/messageController");
@@ -31,32 +32,45 @@ connectDB();
 // Routes
 app.use("/api", routes);
 
+// Socket.io authentication middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    return next(new Error("Authentication error"));
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return next(new Error("Authentication error"));
+    socket.userId = decoded.userId;
+    next();
+  });
+});
+
 // Socket.io
 io.on("connection", (socket) => {
-  console.log("New client connected");
+  console.log("New client connected", socket.userId);
 
   socket.on("joinRoom", (room) => {
     socket.join(room);
-    console.log(`User joined room: ${room}`);
+    console.log(`User ${socket.userId} joined room: ${room}`);
   });
 
   socket.on("leaveRoom", (room) => {
     socket.leave(room);
-    console.log(`User left room: ${room}`);
+    console.log(`User ${socket.userId} left room: ${room}`);
   });
 
   socket.on("chatMessage", async (data, tempMessageId) => {
     try {
       const savedMessage = await saveMessage({
-        sender: data.userId,
+        sender: socket.userId,
         room: data.room,
         content: data.content,
       });
 
       await savedMessage.populate("sender", "username");
 
-      // Emit the message to all clients in the room except the sender
-      socket.to(data.room).emit("message", savedMessage);
+      // Emit the message to all clients in the room including the sender
+      io.in(data.room).emit("message", savedMessage);
 
       // Emit a confirmation to the sender with the tempMessageId
       socket.emit("messageConfirmation", savedMessage, tempMessageId);
@@ -66,7 +80,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected");
+    console.log("Client disconnected", socket.userId);
   });
 });
 

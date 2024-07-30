@@ -1,3 +1,5 @@
+// messagingapp/backend/controllers/messageController.js
+
 const Message = require("../models/Message");
 
 exports.saveMessage = async (messageData) => {
