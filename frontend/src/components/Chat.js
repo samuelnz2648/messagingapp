@@ -4,57 +4,21 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import io from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import {
+  ChatContainer,
+  ChatHeader,
+  RoomSelector,
+  RoomButton,
+  MessagesContainer,
+  Message,
+  MessageForm,
+  MessageInput,
+  SendButton,
+  ConnectionStatus,
+  LogoutButton,
+} from "../styles/ChatStyles";
 
 let socket;
-
-const ChatContainer = styled.div.attrs({
-  className: "flex flex-col h-screen bg-gray-100",
-})``;
-
-const ChatHeader = styled.div.attrs({
-  className: "bg-blue-600 text-white p-4 flex justify-between items-center",
-})``;
-
-const RoomSelector = styled.div.attrs({
-  className: "bg-gray-200 p-2 flex space-x-2",
-})``;
-
-const RoomButton = styled.button.attrs({
-  className:
-    "px-4 py-2 bg-white rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500",
-})``;
-
-const MessagesContainer = styled.div.attrs({
-  className: "flex-grow overflow-y-auto p-4 space-y-2",
-})``;
-
-const Message = styled.div.attrs({
-  className: "bg-white rounded-lg p-2 shadow",
-})`
-  &.own-message {
-    background-color: #e6f3ff;
-    margin-left: auto;
-  }
-`;
-
-const MessageForm = styled.form.attrs({
-  className: "flex p-4 bg-white",
-})``;
-
-const MessageInput = styled.input.attrs({
-  className:
-    "flex-grow border rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500",
-})``;
-
-const SendButton = styled.button.attrs({
-  className:
-    "bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500",
-})``;
-
-const ConnectionStatus = styled.div.attrs({
-  className: "bg-red-500 text-white p-2 text-center",
-})``;
 
 function Chat() {
   const [messages, setMessages] = useState([]);
@@ -107,7 +71,6 @@ function Chat() {
 
     socket.on("message", (message) => {
       setMessages((prevMessages) => {
-        // Check if the message already exists in the state
         const messageExists = prevMessages.some(
           (msg) => msg._id === message._id
         );
@@ -191,12 +154,7 @@ function Chat() {
         <h2 className="text-xl font-bold">Chat Room: {room}</h2>
         <div className="flex items-center space-x-4">
           <span>Logged in as: {username}</span>
-          <button
-            onClick={logout}
-            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-          >
-            Logout
-          </button>
+          <LogoutButton onClick={logout}>Logout</LogoutButton>
         </div>
       </ChatHeader>
       <RoomSelector>
