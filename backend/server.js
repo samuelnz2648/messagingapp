@@ -1,3 +1,5 @@
+// messagingapp/backend/server.js
+
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
@@ -153,6 +155,7 @@ io.on("connection", (socket) => {
       }
 
       message.content = content;
+      message.isEdited = true;
       await message.save();
 
       const updatedMessage = await message.populate("sender", "username");
@@ -189,10 +192,8 @@ io.on("connection", (socket) => {
         });
       }
 
-      await message.remove();
-      console.log(
-        `Broadcasting message deletion to room ${room}: ${messageId}`
-      );
+      await Message.deleteOne({ _id: messageId });
+      console.log(`Message deleted: ${messageId}`);
       io.in(room).emit("messageDeleted", messageId);
     } catch (error) {
       console.error("Error deleting message:", error);

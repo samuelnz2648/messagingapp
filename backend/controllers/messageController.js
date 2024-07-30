@@ -79,7 +79,7 @@ exports.updateMessage = async (req, res, next) => {
       return next(new AppError("No message found with that ID", 404));
     }
 
-    if (!message.isFromUser(req.user._id)) {
+    if (message.sender.toString() !== req.user._id.toString()) {
       return next(new AppError("You can only edit your own messages", 403));
     }
 
@@ -108,11 +108,11 @@ exports.deleteMessage = async (req, res, next) => {
       return next(new AppError("No message found with that ID", 404));
     }
 
-    if (!message.isFromUser(req.user._id)) {
+    if (message.sender.toString() !== req.user._id.toString()) {
       return next(new AppError("You can only delete your own messages", 403));
     }
 
-    await message.remove();
+    await Message.deleteOne({ _id: req.params.id });
 
     res.status(204).json({
       status: "success",
@@ -120,6 +120,25 @@ exports.deleteMessage = async (req, res, next) => {
     });
   } catch (error) {
     next(new AppError("Error deleting message", 500));
+  }
+};
+
+exports.getMessagesByUser = async (req, res, next) => {
+  try {
+    const userId = req.params.userId || req.user._id;
+    const messages = await Message.find({ sender: userId })
+      .sort("-timestamp")
+      .populate("sender", "username");
+
+    res.status(200).json({
+      status: "success",
+      results: messages.length,
+      data: {
+        messages,
+      },
+    });
+  } catch (error) {
+    next(new AppError("Error fetching user messages", 500));
   }
 };
 
