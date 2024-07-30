@@ -1,5 +1,3 @@
-// messagingapp/frontend/src/components/Login.js
-
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -20,15 +18,17 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:5001/api/login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "http://localhost:5001/api/auth/login",
+        {
+          email,
+          password,
+        }
+      );
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("userId", response.data.userId);
       navigate("/chat");
     } catch (error) {
-      console.error("Login error", error.response.data);
+      console.error("Login error", error.response?.data);
       alert("Login failed. Please check your credentials.");
     }
   };

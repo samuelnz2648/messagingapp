@@ -1,5 +1,3 @@
-// messagingapp/frontend/src/components/Register.js
-
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -21,7 +19,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5001/api/register", {
+      await axios.post("http://localhost:5001/api/auth/register", {
         username,
         email,
         password,
@@ -29,7 +27,7 @@ function Register() {
       alert("Registration successful! Please login.");
       navigate("/login");
     } catch (error) {
-      console.error("Registration error", error.response.data);
+      console.error("Registration error", error.response?.data);
       alert("Registration failed. Please try again.");
     }
   };
