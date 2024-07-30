@@ -84,12 +84,15 @@ exports.updateMessage = async (req, res, next) => {
     }
 
     message.content = content;
+    message.isEdited = true;
     await message.save();
+
+    const updatedMessage = await message.populate("sender", "username");
 
     res.status(200).json({
       status: "success",
       data: {
-        message,
+        message: updatedMessage,
       },
     });
   } catch (error) {
@@ -119,3 +122,5 @@ exports.deleteMessage = async (req, res, next) => {
     next(new AppError("Error deleting message", 500));
   }
 };
+
+module.exports = exports;

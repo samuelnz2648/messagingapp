@@ -34,8 +34,8 @@ const messageSchema = new mongoose.Schema(
   }
 );
 
-// Index for efficient querying
-messageSchema.index({ room: 1, timestamp: -1 });
+// Index for efficient querying and sorting
+messageSchema.index({ room: 1, timestamp: 1 });
 
 // Virtual populate
 messageSchema.virtual("senderInfo", {
@@ -53,7 +53,7 @@ messageSchema.methods.isFromUser = function (userId) {
 // Static method to get recent messages from a room
 messageSchema.statics.getRecentMessages = function (room, limit = 50) {
   return this.find({ room })
-    .sort("-timestamp")
+    .sort({ timestamp: 1 }) // Sort by timestamp in ascending order
     .limit(limit)
     .populate("sender", "username");
 };

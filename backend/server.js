@@ -1,5 +1,3 @@
-// messagingapp/backend/server.js
-
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
@@ -53,64 +51,102 @@ app.all("*", (req, res, next) => {
 // Global error handling middleware
 app.use(globalErrorHandler);
 
+// Store user information for each socket connection
+const userSockets = new Map();
+
 // Socket.io authentication middleware
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const token = socket.handshake.auth.token;
   if (!token) {
+    console.log("Authentication error: No token provided");
     return next(new Error("Authentication error"));
   }
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) return next(new Error("Authentication error"));
-    socket.userId = decoded.userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select("username");
+    if (!user) {
+      console.log("Authentication error: User not found");
+      return next(new Error("User not found"));
+    }
+    console.log("User authenticated:", user.username);
+    socket.user = user;
     next();
-  });
+  } catch (error) {
+    console.log("Authentication error:", error.message);
+    return next(new Error("Authentication error"));
+  }
 });
 
 // Socket.io
 io.on("connection", (socket) => {
-  console.log("New client connected", socket.userId);
+  console.log(
+    "New client connected:",
+    socket.id,
+    "User:",
+    socket.user.username
+  );
+  userSockets.set(socket.id, socket.user);
 
   socket.on("joinRoom", (room) => {
+    console.log(
+      `User ${socket.user.username} (${socket.id}) joining room: ${room}`
+    );
+    // Leave all other rooms before joining the new one
+    socket.rooms.forEach((r) => {
+      if (r !== socket.id) {
+        console.log(
+          `User ${socket.user.username} (${socket.id}) leaving room: ${r}`
+        );
+        socket.leave(r);
+      }
+    });
     socket.join(room);
-    console.log(`User ${socket.userId} joined room: ${room}`);
+    console.log(
+      `User ${socket.user.username} (${socket.id}) joined room: ${room}`
+    );
   });
 
-  socket.on("leaveRoom", (room) => {
-    socket.leave(room);
-    console.log(`User ${socket.userId} left room: ${room}`);
-  });
-
-  socket.on("chatMessage", async (data, tempMessageId) => {
+  socket.on("chatMessage", async (data) => {
+    console.log(
+      `Received message from ${socket.user.username} (${socket.id}) in room ${data.room}:`,
+      data.content
+    );
     try {
       const savedMessage = await saveMessage({
-        sender: socket.userId,
+        sender: socket.user._id,
         room: data.room,
         content: data.content,
       });
 
       await savedMessage.populate("sender", "username");
 
+      console.log(`Broadcasting message to room ${data.room}:`, savedMessage);
       io.in(data.room).emit("message", savedMessage);
-      socket.emit("messageConfirmation", savedMessage, tempMessageId);
     } catch (error) {
       console.error("Error saving message:", error);
       socket.emit("messageError", {
-        tempMessageId,
         error: "Failed to save message",
       });
     }
   });
 
   socket.on("editMessage", async (data) => {
+    console.log(
+      `Editing message: ${data.messageId} by ${socket.user.username} (${socket.id}) in room ${data.room}`
+    );
     try {
       const { messageId, content, room } = data;
       const message = await Message.findById(messageId);
 
       if (!message) {
+        console.log(`Message not found: ${messageId}`);
         return socket.emit("messageError", { error: "Message not found" });
       }
 
-      if (!message.isFromUser(socket.userId)) {
+      if (message.sender.toString() !== socket.user._id.toString()) {
+        console.log(
+          `Unauthorized edit attempt by ${socket.user.username} (${socket.id})`
+        );
         return socket.emit("messageError", {
           error: "You can only edit your own messages",
         });
@@ -120,6 +156,10 @@ io.on("connection", (socket) => {
       await message.save();
 
       const updatedMessage = await message.populate("sender", "username");
+      console.log(
+        `Broadcasting updated message to room ${room}:`,
+        updatedMessage
+      );
       io.in(room).emit("messageUpdated", updatedMessage);
     } catch (error) {
       console.error("Error editing message:", error);
@@ -128,21 +168,31 @@ io.on("connection", (socket) => {
   });
 
   socket.on("deleteMessage", async (data) => {
+    console.log(
+      `Deleting message: ${data.messageId} by ${socket.user.username} (${socket.id}) in room ${data.room}`
+    );
     try {
       const { messageId, room } = data;
       const message = await Message.findById(messageId);
 
       if (!message) {
+        console.log(`Message not found: ${messageId}`);
         return socket.emit("messageError", { error: "Message not found" });
       }
 
-      if (!message.isFromUser(socket.userId)) {
+      if (message.sender.toString() !== socket.user._id.toString()) {
+        console.log(
+          `Unauthorized delete attempt by ${socket.user.username} (${socket.id})`
+        );
         return socket.emit("messageError", {
           error: "You can only delete your own messages",
         });
       }
 
       await message.remove();
+      console.log(
+        `Broadcasting message deletion to room ${room}: ${messageId}`
+      );
       io.in(room).emit("messageDeleted", messageId);
     } catch (error) {
       console.error("Error deleting message:", error);
@@ -151,7 +201,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected", socket.userId);
+    console.log(
+      "Client disconnected:",
+      socket.id,
+      "User:",
+      socket.user.username
+    );
+    userSockets.delete(socket.id);
   });
 });
 
@@ -173,3 +229,5 @@ process.on("uncaughtException", (err) => {
 
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

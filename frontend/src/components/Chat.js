@@ -1,5 +1,3 @@
-// messagingapp/frontend/src/components/Chat.js
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import io from "socket.io-client";
 import axios from "axios";
@@ -30,76 +28,106 @@ function Chat() {
   const [username, setUsername] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
 
   const fetchMessages = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
+      console.log("Fetching messages for room:", room);
       const response = await axios.get(
         `http://localhost:5001/api/messages/${room}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      console.log("Fetched messages:", response.data.data.messages);
       setMessages(response.data.data.messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
-  }, [room]);
+  }, [room, token]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const initializeSocket = useCallback(() => {
     if (!token) {
+      console.log("No token found, redirecting to login");
       navigate("/login");
       return;
     }
 
-    socket = io("http://localhost:5001", {
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      auth: { token },
-    });
+    if (!socket) {
+      console.log("Initializing socket connection");
+      socket = io("http://localhost:5001", {
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        auth: { token },
+      });
 
-    socket.on("connect", () => {
-      setConnected(true);
-      socket.emit("joinRoom", room);
+      socket.on("connect", () => {
+        console.log("Socket connected");
+        setConnected(true);
+        joinRoom(room);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Socket disconnected");
+        setConnected(false);
+      });
+
+      socket.on("message", (message) => {
+        console.log("Received message:", message);
+        setMessages((prevMessages) => [...prevMessages, message]);
+      });
+
+      socket.on("messageUpdated", (updatedMessage) => {
+        console.log("Message updated:", updatedMessage);
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg._id === updatedMessage._id ? updatedMessage : msg
+          )
+        );
+      });
+
+      socket.on("messageDeleted", (deletedMessageId) => {
+        console.log("Message deleted:", deletedMessageId);
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg._id !== deletedMessageId)
+        );
+      });
+    }
+  }, [navigate, room, token]);
+
+  const joinRoom = useCallback(
+    (newRoom) => {
+      console.log("Joining room:", newRoom);
+      socket.emit("joinRoom", newRoom);
       fetchMessages();
-    });
+    },
+    [fetchMessages]
+  );
 
-    socket.on("disconnect", () => {
-      setConnected(false);
-    });
-
-    socket.on("message", (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
-    });
-
-    socket.on("messageUpdated", (updatedMessage) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg._id === updatedMessage._id ? updatedMessage : msg
-        )
-      );
-    });
-
-    socket.on("messageDeleted", (deletedMessageId) => {
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg._id !== deletedMessageId)
-      );
-    });
-
-    fetchUsername();
+  useEffect(() => {
+    initializeSocket();
 
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("message");
-      socket.off("messageUpdated");
-      socket.off("messageDeleted");
-      socket.disconnect();
+      if (socket) {
+        console.log("Cleaning up socket connection");
+        socket.off("connect");
+        socket.off("disconnect");
+        socket.off("message");
+        socket.off("messageUpdated");
+        socket.off("messageDeleted");
+        socket.disconnect();
+        socket = null;
+      }
     };
-  }, [room, navigate, fetchMessages]);
+  }, [initializeSocket]);
+
+  useEffect(() => {
+    if (connected) {
+      joinRoom(room);
+    }
+  }, [room, connected, joinRoom]);
 
   useEffect(() => {
     scrollToBottom();
@@ -109,17 +137,21 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchUsername = async () => {
+  const fetchUsername = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
       const response = await axios.get("http://localhost:5001/api/auth/user", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Fetched username:", response.data.data.user.username);
       setUsername(response.data.data.user.username);
     } catch (error) {
       console.error("Error fetching username:", error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchUsername();
+  }, [fetchUsername]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -128,6 +160,7 @@ function Chat() {
 
       try {
         if (editingMessageId) {
+          console.log("Editing message:", editingMessageId);
           await socket.emit("editMessage", {
             messageId: editingMessageId,
             content: inputMessage.trim(),
@@ -135,6 +168,7 @@ function Chat() {
           });
           setEditingMessageId(null);
         } else {
+          console.log("Sending new message");
           await socket.emit("chatMessage", {
             room: room,
             content: inputMessage.trim(),
@@ -152,20 +186,19 @@ function Chat() {
   };
 
   const handleRoomChange = (newRoom) => {
-    socket.emit("leaveRoom", room);
+    console.log("Changing room from", room, "to", newRoom);
     setRoom(newRoom);
-    socket.emit("joinRoom", newRoom);
-    setMessages([]);
-    fetchMessages();
   };
 
   const startEditMessage = (messageId, content) => {
+    console.log("Start editing message:", messageId);
     setEditingMessageId(messageId);
     setInputMessage(content);
   };
 
   const deleteMessage = async (messageId) => {
     try {
+      console.log("Deleting message:", messageId);
       await socket.emit("deleteMessage", { messageId, room });
     } catch (error) {
       console.error("Error deleting message:", error);
@@ -174,10 +207,15 @@ function Chat() {
   };
 
   const logout = () => {
+    console.log("Logging out");
     localStorage.removeItem("token");
-    localStorage.removeItem("userId");
+    setToken(null);
     setUsername("");
     setMessages([]);
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
     navigate("/login");
   };
 
