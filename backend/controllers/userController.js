@@ -2,8 +2,9 @@
 
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-const AppError = require("../utils/errorHandler");
+const AppError = require("../utils/errorHandlers");
 const { promisify } = require("util");
+const morgan = require("morgan");
 
 const signToken = (id) => {
   return jwt.sign({ userId: id }, process.env.JWT_SECRET, {
@@ -13,13 +14,18 @@ const signToken = (id) => {
 
 exports.register = async (req, res, next) => {
   try {
-    console.log("Registration attempt received:", req.body);
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Registration attempt received",
+      { body: req.body }
+    );
     const { username, email, password } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      console.log("User already exists:", existingUser);
+      morgan(
+        ":method :url :status :res[content-length] - :response-time ms User already exists",
+        { user: existingUser }
+      );
       return res.status(400).json({
         status: "fail",
         message: "User with this email or username already exists",
@@ -27,9 +33,11 @@ exports.register = async (req, res, next) => {
     }
 
     const user = await User.create({ username, email, password });
-    console.log("New user created:", user);
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms New user created",
+      { user: user.username }
+    );
 
-    // Remove password from output
     user.password = undefined;
 
     const token = signToken(user._id);
@@ -40,53 +48,68 @@ exports.register = async (req, res, next) => {
       data: { user },
     });
   } catch (error) {
-    console.error("Error in registration:", error);
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Error in registration: :error",
+      { error: error.message }
+    );
     next(error);
   }
 };
 
 exports.login = async (req, res, next) => {
   try {
-    console.log("Login attempt received:", req.body);
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Login attempt received",
+      { email: req.body.email }
+    );
     const { email, password } = req.body;
 
-    // Check if email and password exist
     if (!email || !password) {
-      console.log("Missing email or password");
+      morgan(
+        ":method :url :status :res[content-length] - :response-time ms Missing email or password"
+      );
       return res.status(400).json({
         status: "fail",
         message: "Please provide email and password",
       });
     }
 
-    // Check if user exists && password is correct
     const user = await User.findOne({ email }).select("+password");
-    console.log("User found:", user ? "Yes" : "No");
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms User found",
+      { found: user ? "Yes" : "No" }
+    );
 
     if (!user || !(await user.comparePassword(password))) {
-      console.log("Invalid email or password");
+      morgan(
+        ":method :url :status :res[content-length] - :response-time ms Invalid email or password"
+      );
       return res.status(401).json({
         status: "fail",
         message: "Incorrect email or password",
       });
     }
 
-    // If everything ok, send token to client
     const token = signToken(user._id);
-    console.log("Login successful for user:", user.email);
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Login successful",
+      { user: user.email }
+    );
     res.status(200).json({
       status: "success",
       token,
     });
   } catch (error) {
-    console.error("Error in login:", error);
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Error in login: :error",
+      { error: error.message }
+    );
     next(error);
   }
 };
 
 exports.protect = async (req, res, next) => {
   try {
-    // 1) Getting token and check if it's there
     let token;
     if (
       req.headers.authorization &&
@@ -96,26 +119,37 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
+      morgan(
+        ":method :url :status :res[content-length] - :response-time ms No token provided"
+      );
       return next(
         new AppError("You are not logged in! Please log in to get access.", 401)
       );
     }
 
-    // 2) Verification token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    // 3) Check if user still exists
     const currentUser = await User.findById(decoded.userId);
     if (!currentUser) {
+      morgan(
+        ":method :url :status :res[content-length] - :response-time ms User not found for token"
+      );
       return next(
         new AppError("The user belonging to this token no longer exists.", 401)
       );
     }
 
-    // GRANT ACCESS TO PROTECTED ROUTE
     req.user = currentUser;
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms User authenticated",
+      { user: currentUser.email }
+    );
     next();
   } catch (error) {
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Error in authentication: :error",
+      { error: error.message }
+    );
     next(error);
   }
 };
@@ -124,13 +158,24 @@ exports.getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {
+      morgan(
+        ":method :url :status :res[content-length] - :response-time ms User not found"
+      );
       return next(new AppError("User not found", 404));
     }
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms User fetched",
+      { user: user.email }
+    );
     res.json({
       status: "success",
       data: { user },
     });
   } catch (error) {
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Error fetching user: :error",
+      { error: error.message }
+    );
     next(error);
   }
 };

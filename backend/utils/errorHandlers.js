@@ -1,4 +1,6 @@
-// messagingapp/backend/utils/errorHandler.js
+// messagingapp/backend/utils/errorHandlers.js
+
+const morgan = require("morgan");
 
 class AppError extends Error {
   constructor(message, statusCode) {
@@ -35,6 +37,18 @@ const handleJWTExpiredError = () =>
   new AppError("Your token has expired! Please log in again.", 401);
 
 const sendErrorDev = (err, res) => {
+  morgan(
+    ":method :url :status :res[content-length] - :response-time ms Error in development: :error",
+    {
+      error: JSON.stringify({
+        status: err.status,
+        error: err,
+        message: err.message,
+        stack: err.stack,
+      }),
+    }
+  );
+
   res.status(err.statusCode).json({
     status: err.status,
     error: err,
@@ -44,18 +58,29 @@ const sendErrorDev = (err, res) => {
 };
 
 const sendErrorProd = (err, res) => {
-  // Operational, trusted error: send message to client
   if (err.isOperational) {
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Operational error: :error",
+      {
+        error: JSON.stringify({
+          status: err.status,
+          message: err.message,
+        }),
+      }
+    );
+
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
-  }
-  // Programming or other unknown error: don't leak error details
-  else {
-    // 1) Log error
-    console.error("ERROR 💥", err);
-    // 2) Send generic message
+  } else {
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms Programming or unknown error: :error",
+      {
+        error: JSON.stringify(err),
+      }
+    );
+
     res.status(500).json({
       status: "error",
       message: "Something went wrong!",
@@ -63,7 +88,7 @@ const sendErrorProd = (err, res) => {
   }
 };
 
-module.exports = (err, req, res, next) => {
+const globalErrorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
 
@@ -82,4 +107,34 @@ module.exports = (err, req, res, next) => {
 
     sendErrorProd(error, res);
   }
+};
+
+const handle404 = (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+};
+
+const handleUnhandledRejection = (server) => {
+  process.on("unhandledRejection", (err) => {
+    console.log("UNHANDLED REJECTION! 💥 Shutting down...");
+    console.error(err.name, err.message);
+    server.close(() => {
+      process.exit(1);
+    });
+  });
+};
+
+const handleUncaughtException = () => {
+  process.on("uncaughtException", (err) => {
+    console.log("UNCAUGHT EXCEPTION! 💥 Shutting down...");
+    console.error(err.name, err.message);
+    process.exit(1);
+  });
+};
+
+module.exports = {
+  AppError,
+  globalErrorHandler,
+  handle404,
+  handleUnhandledRejection,
+  handleUncaughtException,
 };

@@ -1,13 +1,19 @@
 // messagingapp/backend/config/database.js
 
 const mongoose = require("mongoose");
+const morgan = require("morgan");
 
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log("MongoDB connected successfully");
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms MongoDB connected successfully"
+    );
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms MongoDB connection error: :error",
+      { error: error.message }
+    );
     process.exit(1);
   }
 };
