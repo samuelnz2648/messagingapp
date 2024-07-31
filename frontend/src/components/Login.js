@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { useChatContext } from "../contexts/ChatContext";
+import axios from "axios";
 import {
   LoginContainer,
   LoginForm,
@@ -8,16 +9,24 @@ import {
   Input,
   Button,
   RegisterLink,
+  ErrorMessage,
 } from "../styles/LoginStyles";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { dispatch } = useChatContext();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    console.log("Login form submitted");
+
     try {
+      console.log("Attempting to login with:", { email });
+
       const response = await axios.post(
         "http://localhost:5001/api/auth/login",
         {
@@ -25,11 +34,21 @@ function Login() {
           password,
         }
       );
-      localStorage.setItem("token", response.data.token);
+
+      console.log("Login response:", response.data);
+
+      const { token } = response.data;
+      localStorage.setItem("token", token);
+      dispatch({ type: "SET_TOKEN", payload: token });
       navigate("/chat");
     } catch (error) {
-      console.error("Login error", error.response?.data);
-      alert("Login failed. Please check your credentials.");
+      console.log("An error occurred during login");
+      console.error("Full error object:", error);
+      setError(
+        error.response?.data?.message || "Login failed. Please try again."
+      );
+    } finally {
+      console.log("Login attempt completed");
     }
   };
 
@@ -37,6 +56,7 @@ function Login() {
     <LoginContainer>
       <LoginForm onSubmit={handleSubmit}>
         <Title>Login</Title>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
         <Input
           type="email"
           placeholder="Email"

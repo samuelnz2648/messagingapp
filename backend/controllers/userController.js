@@ -13,17 +13,21 @@ const signToken = (id) => {
 
 exports.register = async (req, res, next) => {
   try {
+    console.log("Registration attempt received:", req.body);
     const { username, email, password } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return next(
-        new AppError("User with this email or username already exists", 400)
-      );
+      console.log("User already exists:", existingUser);
+      return res.status(400).json({
+        status: "fail",
+        message: "User with this email or username already exists",
+      });
     }
 
     const user = await User.create({ username, email, password });
+    console.log("New user created:", user);
 
     // Remove password from output
     user.password = undefined;
@@ -36,33 +40,46 @@ exports.register = async (req, res, next) => {
       data: { user },
     });
   } catch (error) {
+    console.error("Error in registration:", error);
     next(error);
   }
 };
 
 exports.login = async (req, res, next) => {
   try {
+    console.log("Login attempt received:", req.body);
     const { email, password } = req.body;
 
     // Check if email and password exist
     if (!email || !password) {
-      return next(new AppError("Please provide email and password", 400));
+      console.log("Missing email or password");
+      return res.status(400).json({
+        status: "fail",
+        message: "Please provide email and password",
+      });
     }
 
     // Check if user exists && password is correct
     const user = await User.findOne({ email }).select("+password");
+    console.log("User found:", user ? "Yes" : "No");
 
     if (!user || !(await user.comparePassword(password))) {
-      return next(new AppError("Incorrect email or password", 401));
+      console.log("Invalid email or password");
+      return res.status(401).json({
+        status: "fail",
+        message: "Incorrect email or password",
+      });
     }
 
     // If everything ok, send token to client
     const token = signToken(user._id);
-    res.json({
+    console.log("Login successful for user:", user.email);
+    res.status(200).json({
       status: "success",
       token,
     });
   } catch (error) {
+    console.error("Error in login:", error);
     next(error);
   }
 };

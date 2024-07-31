@@ -1,230 +1,83 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import io from "socket.io-client";
-import axios from "axios";
+// src/components/Chat.js
+
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useChatContext } from "../contexts/ChatContext";
+import { useChatSocket } from "../hooks/useChatSocket";
+import { useChatApi } from "../hooks/useChatApi";
+import MessageList from "./MessageList";
+import MessageForm from "./MessageForm";
 import {
   ChatContainer,
   ChatHeader,
   RoomSelector,
   RoomButton,
-  MessagesContainer,
-  Message,
-  MessageForm,
-  MessageInput,
-  SendButton,
   ConnectionStatus,
   LogoutButton,
-  EditButton,
-  DeleteButton,
 } from "../styles/ChatStyles";
 
-let socket;
-
 function Chat() {
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [room, setRoom] = useState("general");
-  const [connected, setConnected] = useState(false);
-  const [username, setUsername] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [editingMessageId, setEditingMessageId] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const { state, dispatch } = useChatContext();
+  const { joinRoom, sendMessage, deleteMessage } = useChatSocket();
+  const { fetchMessages, fetchUsername } = useChatApi();
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
+  const [editingMessageContent, setEditingMessageContent] = useState("");
 
-  const fetchMessages = useCallback(async () => {
-    try {
-      console.log("Fetching messages for room:", room);
-      const response = await axios.get(
-        `http://localhost:5001/api/messages/${room}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      console.log("Fetched messages:", response.data.data.messages);
-      setMessages(response.data.data.messages);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
-  }, [room, token]);
-
-  const initializeSocket = useCallback(() => {
+  useEffect(() => {
+    const token = state.token || localStorage.getItem("token");
     if (!token) {
-      console.log("No token found, redirecting to login");
       navigate("/login");
-      return;
+    } else {
+      if (!state.token) {
+        dispatch({ type: "SET_TOKEN", payload: token });
+      }
+      fetchUsername();
     }
+  }, [state.token, navigate, fetchUsername, dispatch]);
 
-    if (!socket) {
-      console.log("Initializing socket connection");
-      socket = io("http://localhost:5001", {
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        auth: { token },
-      });
-
-      socket.on("connect", () => {
-        console.log("Socket connected");
-        setConnected(true);
-        joinRoom(room);
-      });
-
-      socket.on("disconnect", () => {
-        console.log("Socket disconnected");
-        setConnected(false);
-      });
-
-      socket.on("message", (message) => {
-        console.log("Received message:", message);
-        setMessages((prevMessages) => [...prevMessages, message]);
-      });
-
-      socket.on("messageUpdated", (updatedMessage) => {
-        console.log("Message updated:", updatedMessage);
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === updatedMessage._id ? updatedMessage : msg
-          )
-        );
-      });
-
-      socket.on("messageDeleted", (deletedMessageId) => {
-        console.log("Message deleted:", deletedMessageId);
-        setMessages((prevMessages) =>
-          prevMessages.filter((msg) => msg._id !== deletedMessageId)
-        );
-      });
-    }
-  }, [navigate, room, token]);
-
-  const joinRoom = useCallback(
-    (newRoom) => {
-      console.log("Joining room:", newRoom);
-      socket.emit("joinRoom", newRoom);
+  useEffect(() => {
+    if (state.connected) {
+      joinRoom(state.room);
       fetchMessages();
-    },
-    [fetchMessages]
-  );
-
-  useEffect(() => {
-    initializeSocket();
-
-    return () => {
-      if (socket) {
-        console.log("Cleaning up socket connection");
-        socket.off("connect");
-        socket.off("disconnect");
-        socket.off("message");
-        socket.off("messageUpdated");
-        socket.off("messageDeleted");
-        socket.disconnect();
-        socket = null;
-      }
-    };
-  }, [initializeSocket]);
-
-  useEffect(() => {
-    if (connected) {
-      joinRoom(room);
     }
-  }, [room, connected, joinRoom]);
+  }, [state.room, state.connected, joinRoom, fetchMessages]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const fetchUsername = useCallback(async () => {
-    try {
-      const response = await axios.get("http://localhost:5001/api/auth/user", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Fetched username:", response.data.data.user.username);
-      setUsername(response.data.data.user.username);
-    } catch (error) {
-      console.error("Error fetching username:", error);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    fetchUsername();
-  }, [fetchUsername]);
-
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    if (inputMessage.trim() && connected && !isSending) {
-      setIsSending(true);
-
-      try {
-        if (editingMessageId) {
-          console.log("Editing message:", editingMessageId);
-          await socket.emit("editMessage", {
-            messageId: editingMessageId,
-            content: inputMessage.trim(),
-            room,
-          });
-          setEditingMessageId(null);
-        } else {
-          console.log("Sending new message");
-          await socket.emit("chatMessage", {
-            room: room,
-            content: inputMessage.trim(),
-          });
-        }
-        setInputMessage("");
-        scrollToBottom();
-      } catch (error) {
-        console.error("Error sending message:", error);
-        alert("Failed to send message. Please try again.");
-      } finally {
-        setIsSending(false);
-      }
-    }
-  };
+  }, [state.messages]);
 
   const handleRoomChange = (newRoom) => {
-    console.log("Changing room from", room, "to", newRoom);
-    setRoom(newRoom);
+    console.log("Changing room from", state.room, "to", newRoom);
+    dispatch({ type: "SET_ROOM", payload: newRoom });
   };
 
-  const startEditMessage = (messageId, content) => {
-    console.log("Start editing message:", messageId);
-    setEditingMessageId(messageId);
-    setInputMessage(content);
+  const handleEditMessage = (messageId, content) => {
+    dispatch({ type: "SET_EDITING_MESSAGE_ID", payload: messageId });
+    setEditingMessageContent(content);
   };
 
-  const deleteMessage = async (messageId) => {
-    try {
-      console.log("Deleting message:", messageId);
-      await socket.emit("deleteMessage", { messageId, room });
-    } catch (error) {
-      console.error("Error deleting message:", error);
-      alert("Failed to delete message. Please try again.");
+  const handleSendMessage = (content) => {
+    sendMessage(content);
+    if (state.editingMessageId) {
+      dispatch({ type: "SET_EDITING_MESSAGE_ID", payload: null });
+      setEditingMessageContent("");
     }
   };
 
   const logout = () => {
     console.log("Logging out");
     localStorage.removeItem("token");
-    setToken(null);
-    setUsername("");
-    setMessages([]);
-    if (socket) {
-      socket.disconnect();
-      socket = null;
-    }
+    dispatch({ type: "RESET" });
     navigate("/login");
   };
 
   return (
     <ChatContainer>
       <ChatHeader>
-        <h2 className="text-xl font-bold">Chat Room: {room}</h2>
+        <h2 className="text-xl font-bold">Chat Room: {state.room}</h2>
         <div className="flex items-center space-x-4">
-          <span>Logged in as: {username}</span>
+          <span>Logged in as: {state.username}</span>
           <LogoutButton onClick={logout}>Logout</LogoutButton>
         </div>
       </ChatHeader>
@@ -236,46 +89,21 @@ function Chat() {
           Random
         </RoomButton>
       </RoomSelector>
-      <MessagesContainer>
-        {messages.map((msg) => (
-          <Message
-            key={msg._id}
-            className={msg.sender.username === username ? "own-message" : ""}
-          >
-            <strong>{msg.sender.username}: </strong>
-            {msg.content}
-            {msg.sender.username === username && (
-              <div className="message-actions">
-                <EditButton
-                  onClick={() => startEditMessage(msg._id, msg.content)}
-                >
-                  Edit
-                </EditButton>
-                <DeleteButton onClick={() => deleteMessage(msg._id)}>
-                  Delete
-                </DeleteButton>
-              </div>
-            )}
-            {msg.isEdited && <span className="edited-tag"> (edited)</span>}
-          </Message>
-        ))}
-        <div ref={messagesEndRef} />
-      </MessagesContainer>
-      <MessageForm onSubmit={sendMessage}>
-        <MessageInput
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          placeholder={
-            editingMessageId ? "Edit your message..." : "Type a message..."
-          }
-          disabled={isSending}
-        />
-        <SendButton type="submit" disabled={!connected || isSending}>
-          {editingMessageId ? "Update" : "Send"}
-        </SendButton>
-      </MessageForm>
-      {!connected && (
+      <MessageList
+        messages={state.messages}
+        username={state.username}
+        onDeleteMessage={deleteMessage}
+        onEditMessage={handleEditMessage}
+      />
+      <div ref={messagesEndRef} />
+      <MessageForm
+        onSendMessage={handleSendMessage}
+        isEditing={!!state.editingMessageId}
+        isSending={state.isSending}
+        isConnected={state.connected}
+        editingMessageContent={editingMessageContent}
+      />
+      {!state.connected && (
         <ConnectionStatus>
           Disconnected. Trying to reconnect...
         </ConnectionStatus>

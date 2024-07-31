@@ -36,3 +36,7 @@ export const LoginLink = styled.p.attrs({
     }
   }
 `;
+
+export const ErrorMessage = styled.div.attrs({
+  className: "text-red-500 text-sm mb-4",
+})``;
