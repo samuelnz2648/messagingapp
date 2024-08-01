@@ -1,4 +1,4 @@
-// src/contexts/ChatContext.js
+// messagingapp/frontend/src/contexts/ChatContext.js
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 
@@ -23,9 +23,9 @@ function chatReducer(state, action) {
     case "UPDATE_MESSAGE":
       return {
         ...state,
-        messages: state.messages.map((msg) =>
-          msg._id === action.payload._id ? action.payload : msg
-        ),
+        messages: state.messages
+          .map((msg) => (msg._id === action.payload._id ? action.payload : msg))
+          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)),
       };
     case "DELETE_MESSAGE":
       return {
@@ -33,7 +33,7 @@ function chatReducer(state, action) {
         messages: state.messages.filter((msg) => msg._id !== action.payload),
       };
     case "SET_ROOM":
-      return { ...state, room: action.payload };
+      return { ...state, room: action.payload, messages: [] };
     case "SET_CONNECTED":
       return { ...state, connected: action.payload };
     case "SET_USERNAME":

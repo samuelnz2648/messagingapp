@@ -40,3 +40,17 @@ export const LoginLink = styled.p.attrs({
 export const ErrorMessage = styled.div.attrs({
   className: "text-red-500 text-sm mb-4",
 })``;
+
+export const PasswordRequirements = styled.div.attrs({
+  className: "text-sm text-gray-600 mb-4",
+})`
+  ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin-top: 0.5em;
+  }
+
+  li {
+    margin-bottom: 0.25em;
+  }
+`;

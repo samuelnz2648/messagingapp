@@ -20,34 +20,36 @@ export const RoomButton = styled.button.attrs({
 })``;
 
 export const MessagesContainer = styled.div.attrs({
-  className: "flex-grow overflow-y-auto p-4 space-y-2",
+  className: "flex-grow overflow-y-auto p-4 space-y-4",
 })``;
 
-export const Message = styled.div.attrs({
-  className: "bg-white rounded-lg p-2 shadow relative",
+export const MessageWrapper = styled.div.attrs({
+  className: "flex",
 })`
-  &.own-message {
-    background-color: #e6f3ff;
-    margin-left: auto;
-  }
-
-  .message-actions {
-    display: none;
-    position: absolute;
-    right: 5px;
-    top: 5px;
-  }
-
-  &:hover .message-actions {
-    display: flex;
-  }
-
-  .edited-tag {
-    font-size: 0.8em;
-    color: #888;
-    margin-left: 5px;
-  }
+  justify-content: ${(props) =>
+    props.$isOwnMessage ? "flex-end" : "flex-start"};
 `;
+
+export const MessageContent = styled.div.attrs({
+  className: "rounded-lg p-3 max-w-xs lg:max-w-md",
+})`
+  background-color: ${(props) => (props.$isOwnMessage ? "#e6f3ff" : "white")};
+  ${(props) =>
+    props.$isOwnMessage
+      ? "border-top-right-radius: 0;"
+      : "border-top-left-radius: 0;"}
+`;
+
+export const MessageSender = styled.div.attrs({
+  className: "font-bold mb-1",
+})`
+  color: ${(props) => (props.$isOwnMessage ? "#3b82f6" : "#4b5563")};
+  ${(props) => (props.$isOwnMessage ? "text-right;" : "text-left;")}
+`;
+
+export const MessageActions = styled.div.attrs({
+  className: "flex mt-1 space-x-2 justify-end",
+})``;
 
 export const MessageForm = styled.form.attrs({
   className: "flex p-4 bg-white",

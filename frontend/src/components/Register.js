@@ -1,3 +1,5 @@
+// messagingapp/frontend/src/components/Register.js
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -9,6 +11,7 @@ import {
   Button,
   LoginLink,
   ErrorMessage,
+  PasswordRequirements,
 } from "../styles/RegisterStyles";
 
 function Register() {
@@ -43,7 +46,7 @@ function Register() {
       console.error("Full error object:", error);
       setError(
         error.response?.data?.message ||
-          "Registration failed. Please try again."
+        "Registration failed. Please try again."
       );
     } finally {
       console.log("Registration attempt completed");
@@ -76,6 +79,16 @@ function Register() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <PasswordRequirements>
+          Password must:
+          <ul>
+            <li>Be at least 8 characters long</li>
+            <li>Contain at least one uppercase letter</li>
+            <li>Contain at least one lowercase letter</li>
+            <li>Contain at least one number</li>
+            <li>Contain at least one symbol ($@#&!)</li>
+          </ul>
+        </PasswordRequirements>
         <Button type="submit">Register</Button>
       </RegisterForm>
       <LoginLink>

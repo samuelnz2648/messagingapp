@@ -26,7 +26,10 @@ exports.getMessages = async (req, res, next) => {
       return next(new AppError("Room parameter is required", 400));
     }
 
-    const messages = await Message.getRecentMessages(room, limit);
+    const messages = await Message.find({ room })
+      .sort({ timestamp: 1 })
+      .limit(limit)
+      .populate("sender", "username");
 
     logger.info(`Retrieved ${messages.length} messages for room ${room}`);
 

@@ -1,4 +1,4 @@
-// src/components/Chat.js
+// messagingapp/frontend/src/components/Chat.js
 
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -49,6 +49,7 @@ function Chat() {
 
   const handleRoomChange = (newRoom) => {
     console.log("Changing room from", state.room, "to", newRoom);
+    dispatch({ type: "SET_MESSAGES", payload: [] });
     dispatch({ type: "SET_ROOM", payload: newRoom });
   };
 

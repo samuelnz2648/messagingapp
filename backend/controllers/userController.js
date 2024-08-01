@@ -52,6 +52,15 @@ exports.register = async (req, res, next) => {
       error: error.message,
       stack: error.stack,
     });
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        status: "fail",
+        message: messages.join(", "),
+      });
+    }
+
     next(error);
   }
 };
