@@ -1,6 +1,6 @@
 // messagingapp/backend/utils/errorHandlers.js
 
-const morgan = require("morgan");
+const logger = require("./logger");
 
 class AppError extends Error {
   constructor(message, statusCode) {
@@ -37,17 +37,12 @@ const handleJWTExpiredError = () =>
   new AppError("Your token has expired! Please log in again.", 401);
 
 const sendErrorDev = (err, res) => {
-  morgan(
-    ":method :url :status :res[content-length] - :response-time ms Error in development: :error",
-    {
-      error: JSON.stringify({
-        status: err.status,
-        error: err,
-        message: err.message,
-        stack: err.stack,
-      }),
-    }
-  );
+  logger.error("Error in development", {
+    status: err.status,
+    error: err,
+    message: err.message,
+    stack: err.stack,
+  });
 
   res.status(err.statusCode).json({
     status: err.status,
@@ -59,27 +54,21 @@ const sendErrorDev = (err, res) => {
 
 const sendErrorProd = (err, res) => {
   if (err.isOperational) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Operational error: :error",
-      {
-        error: JSON.stringify({
-          status: err.status,
-          message: err.message,
-        }),
-      }
-    );
+    logger.error("Operational error", {
+      status: err.status,
+      message: err.message,
+    });
 
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
   } else {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Programming or unknown error: :error",
-      {
-        error: JSON.stringify(err),
-      }
-    );
+    logger.error("Programming or unknown error", {
+      error: err,
+      message: err.message,
+      stack: err.stack,
+    });
 
     res.status(500).json({
       status: "error",
@@ -110,13 +99,17 @@ const globalErrorHandler = (err, req, res, next) => {
 };
 
 const handle404 = (req, res, next) => {
+  logger.warn(`404 - Not Found: ${req.method} ${req.originalUrl}`);
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 };
 
 const handleUnhandledRejection = (server) => {
   process.on("unhandledRejection", (err) => {
-    console.log("UNHANDLED REJECTION! 💥 Shutting down...");
-    console.error(err.name, err.message);
+    logger.error("UNHANDLED REJECTION! Shutting down...", {
+      error: err,
+      message: err.message,
+      stack: err.stack,
+    });
     server.close(() => {
       process.exit(1);
     });
@@ -125,8 +118,11 @@ const handleUnhandledRejection = (server) => {
 
 const handleUncaughtException = () => {
   process.on("uncaughtException", (err) => {
-    console.log("UNCAUGHT EXCEPTION! 💥 Shutting down...");
-    console.error(err.name, err.message);
+    logger.error("UNCAUGHT EXCEPTION! Shutting down...", {
+      error: err,
+      message: err.message,
+      stack: err.stack,
+    });
     process.exit(1);
   });
 };

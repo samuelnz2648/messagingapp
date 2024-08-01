@@ -2,18 +2,16 @@
 
 const Message = require("../models/Message");
 const AppError = require("../utils/errorHandlers");
-const morgan = require("morgan");
+const logger = require("../utils/logger");
 
 exports.saveMessage = async (messageData) => {
   try {
     const message = new Message(messageData);
     await message.save();
+    logger.info(`Message saved successfully: ${message._id}`);
     return message.populate("sender", "username");
   } catch (error) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Error saving message: :error",
-      { error: error.message }
-    );
+    logger.error(`Error saving message: ${error.message}`, { error });
     throw new AppError("Failed to save message", 500);
   }
 };
@@ -24,15 +22,13 @@ exports.getMessages = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 50;
 
     if (!room) {
+      logger.warn("Get messages attempt without room parameter");
       return next(new AppError("Room parameter is required", 400));
     }
 
     const messages = await Message.getRecentMessages(room, limit);
 
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Retrieved :count messages for room :room",
-      { count: messages.length, room }
-    );
+    logger.info(`Retrieved ${messages.length} messages for room ${room}`);
 
     res.status(200).json({
       status: "success",
@@ -42,10 +38,11 @@ exports.getMessages = async (req, res, next) => {
       },
     });
   } catch (error) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Error fetching messages: :error",
-      { error: error.message }
-    );
+    logger.error(`Error fetching messages: ${error.message}`, {
+      error,
+      room: req.params.room,
+      limit: req.query.limit,
+    });
     next(new AppError("Error fetching messages", 500));
   }
 };

@@ -1,19 +1,24 @@
 // messagingapp/backend/config/database.js
 
 const mongoose = require("mongoose");
-const morgan = require("morgan");
+const logger = require("../utils/logger");
 
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms MongoDB connected successfully"
-    );
+    logger.info("MongoDB connected successfully");
+
+    // Log when the connection is disconnected
+    mongoose.connection.on("disconnected", () => {
+      logger.warn("MongoDB disconnected");
+    });
+
+    // Log when the connection is reconnected
+    mongoose.connection.on("reconnected", () => {
+      logger.info("MongoDB reconnected");
+    });
   } catch (error) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms MongoDB connection error: :error",
-      { error: error.message }
-    );
+    logger.error("MongoDB connection error", { error: error.message });
     process.exit(1);
   }
 };

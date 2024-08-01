@@ -1,6 +1,7 @@
 // messagingapp/backend/models/Message.js
 
 const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 
 const messageSchema = new mongoose.Schema(
   {
@@ -51,17 +52,34 @@ messageSchema.methods.isFromUser = function (userId) {
 };
 
 // Static method to get recent messages from a room
-messageSchema.statics.getRecentMessages = function (room, limit = 50) {
-  return this.find({ room })
-    .sort({ timestamp: 1 }) // Sort by timestamp in ascending order
-    .limit(limit)
-    .populate("sender", "username");
+messageSchema.statics.getRecentMessages = async function (room, limit = 50) {
+  const startTime = Date.now();
+  try {
+    const messages = await this.find({ room })
+      .sort({ timestamp: -1 }) // Sort by timestamp in descending order
+      .limit(limit)
+      .populate("sender", "username");
+
+    const duration = Date.now() - startTime;
+    logger.info(
+      `Retrieved ${messages.length} messages for room ${room} in ${duration}ms`
+    );
+
+    return messages;
+  } catch (error) {
+    logger.error(`Error retrieving messages for room ${room}`, {
+      error: error.message,
+      duration: Date.now() - startTime,
+    });
+    throw error;
+  }
 };
 
 // Middleware to run before saving
 messageSchema.pre("save", function (next) {
   if (this.isModified("content") && !this.isNew) {
     this.isEdited = true;
+    logger.info(`Message edited: ${this._id}`);
   }
   next();
 });

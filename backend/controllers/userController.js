@@ -4,7 +4,7 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const AppError = require("../utils/errorHandlers");
 const { promisify } = require("util");
-const morgan = require("morgan");
+const logger = require("../utils/logger");
 
 const signToken = (id) => {
   return jwt.sign({ userId: id }, process.env.JWT_SECRET, {
@@ -14,18 +14,18 @@ const signToken = (id) => {
 
 exports.register = async (req, res, next) => {
   try {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Registration attempt received",
-      { body: req.body }
-    );
+    logger.info("Registration attempt received", {
+      username: req.body.username,
+      email: req.body.email,
+    });
     const { username, email, password } = req.body;
 
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      morgan(
-        ":method :url :status :res[content-length] - :response-time ms User already exists",
-        { user: existingUser }
-      );
+      logger.warn("Registration attempt with existing username or email", {
+        username,
+        email,
+      });
       return res.status(400).json({
         status: "fail",
         message: "User with this email or username already exists",
@@ -33,10 +33,10 @@ exports.register = async (req, res, next) => {
     }
 
     const user = await User.create({ username, email, password });
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms New user created",
-      { user: user.username }
-    );
+    logger.info("New user created", {
+      userId: user._id,
+      username: user.username,
+    });
 
     user.password = undefined;
 
@@ -48,26 +48,21 @@ exports.register = async (req, res, next) => {
       data: { user },
     });
   } catch (error) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Error in registration: :error",
-      { error: error.message }
-    );
+    logger.error("Error in registration", {
+      error: error.message,
+      stack: error.stack,
+    });
     next(error);
   }
 };
 
 exports.login = async (req, res, next) => {
   try {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Login attempt received",
-      { email: req.body.email }
-    );
+    logger.info("Login attempt received", { email: req.body.email });
     const { email, password } = req.body;
 
     if (!email || !password) {
-      morgan(
-        ":method :url :status :res[content-length] - :response-time ms Missing email or password"
-      );
+      logger.warn("Login attempt with missing email or password");
       return res.status(400).json({
         status: "fail",
         message: "Please provide email and password",
@@ -75,15 +70,10 @@ exports.login = async (req, res, next) => {
     }
 
     const user = await User.findOne({ email }).select("+password");
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms User found",
-      { found: user ? "Yes" : "No" }
-    );
+    logger.info("User found for login attempt", { found: !!user, email });
 
     if (!user || !(await user.comparePassword(password))) {
-      morgan(
-        ":method :url :status :res[content-length] - :response-time ms Invalid email or password"
-      );
+      logger.warn("Failed login attempt", { email });
       return res.status(401).json({
         status: "fail",
         message: "Incorrect email or password",
@@ -91,19 +81,16 @@ exports.login = async (req, res, next) => {
     }
 
     const token = signToken(user._id);
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Login successful",
-      { user: user.email }
-    );
+    logger.info("Login successful", { userId: user._id, email: user.email });
     res.status(200).json({
       status: "success",
       token,
     });
   } catch (error) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Error in login: :error",
-      { error: error.message }
-    );
+    logger.error("Error in login", {
+      error: error.message,
+      stack: error.stack,
+    });
     next(error);
   }
 };
@@ -119,9 +106,7 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      morgan(
-        ":method :url :status :res[content-length] - :response-time ms No token provided"
-      );
+      logger.warn("Protected route accessed without token");
       return next(
         new AppError("You are not logged in! Please log in to get access.", 401)
       );
@@ -131,25 +116,25 @@ exports.protect = async (req, res, next) => {
 
     const currentUser = await User.findById(decoded.userId);
     if (!currentUser) {
-      morgan(
-        ":method :url :status :res[content-length] - :response-time ms User not found for token"
-      );
+      logger.warn("Protected route accessed with invalid token", {
+        userId: decoded.userId,
+      });
       return next(
         new AppError("The user belonging to this token no longer exists.", 401)
       );
     }
 
     req.user = currentUser;
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms User authenticated",
-      { user: currentUser.email }
-    );
+    logger.info("User authenticated for protected route", {
+      userId: currentUser._id,
+      email: currentUser.email,
+    });
     next();
   } catch (error) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Error in authentication: :error",
-      { error: error.message }
-    );
+    logger.error("Error in authentication", {
+      error: error.message,
+      stack: error.stack,
+    });
     next(error);
   }
 };
@@ -158,24 +143,20 @@ exports.getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {
-      morgan(
-        ":method :url :status :res[content-length] - :response-time ms User not found"
-      );
+      logger.warn("User not found for getUser", { userId: req.user.id });
       return next(new AppError("User not found", 404));
     }
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms User fetched",
-      { user: user.email }
-    );
+    logger.info("User fetched", { userId: user._id, email: user.email });
     res.json({
       status: "success",
       data: { user },
     });
   } catch (error) {
-    morgan(
-      ":method :url :status :res[content-length] - :response-time ms Error fetching user: :error",
-      { error: error.message }
-    );
+    logger.error("Error fetching user", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user.id,
+    });
     next(error);
   }
 };

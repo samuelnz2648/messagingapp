@@ -1,0 +1,86 @@
+{"level":"info","message":"Server running on port 5001","service":"messaging-app","timestamp":"2024-08-01T04:15:16.999Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"messaging-app","timestamp":"2024-08-01T04:15:17.006Z"}
+{"level":"info","message":"OPTIONS /api/auth/login 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.020Z"}
+{"level":"info","message":"Main route accessed: POST /api/auth/login","service":"messaging-app","timestamp":"2024-08-01T04:15:35.028Z"}
+{"level":"info","message":"Auth route accessed: POST /api/auth/login","service":"messaging-app","timestamp":"2024-08-01T04:15:35.028Z"}
+{"email":"sam@gmail.com","level":"info","message":"Login attempt","service":"messaging-app","timestamp":"2024-08-01T04:15:35.029Z"}
+{"email":"sam@gmail.com","level":"info","message":"Login attempt received","service":"messaging-app","timestamp":"2024-08-01T04:15:35.029Z"}
+{"email":"sam@gmail.com","found":true,"level":"info","message":"User found for login attempt","service":"messaging-app","timestamp":"2024-08-01T04:15:35.034Z"}
+{"level":"info","message":"Password comparison for user 66aabc4dc3b4b38c6d42981a completed in 57ms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.091Z"}
+{"email":"sam@gmail.com","level":"info","message":"Login successful","service":"messaging-app","timestamp":"2024-08-01T04:15:35.093Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"POST /api/auth/login 200 207 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.094Z"}
+{"level":"info","message":"OPTIONS /api/auth/user 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.111Z"}
+{"level":"info","message":"Main route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:15:35.112Z"}
+{"level":"info","message":"Auth route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:15:35.112Z"}
+{"level":"info","message":"OPTIONS /api/auth/user 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.114Z"}
+{"email":"sam@gmail.com","level":"info","message":"User authenticated for protected route","service":"messaging-app","timestamp":"2024-08-01T04:15:35.117Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"Get user profile attempt","service":"messaging-app","timestamp":"2024-08-01T04:15:35.117Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"New client connected: rxeS8bAcSbGLAgEtAAAC, User: sam","service":"messaging-app","timestamp":"2024-08-01T04:15:35.119Z"}
+{"email":"sam@gmail.com","level":"info","message":"User fetched","service":"messaging-app","timestamp":"2024-08-01T04:15:35.121Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"GET /api/auth/user 304 undefined - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.122Z"}
+{"level":"info","message":"User sam (rxeS8bAcSbGLAgEtAAAC) joining room: general","service":"messaging-app","timestamp":"2024-08-01T04:15:35.124Z"}
+{"level":"info","message":"OPTIONS /api/messages/general 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.124Z"}
+{"level":"info","message":"Main route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:15:35.125Z"}
+{"level":"info","message":"Auth route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:15:35.125Z"}
+{"level":"info","message":"User sam (rxeS8bAcSbGLAgEtAAAC) joining room: general","service":"messaging-app","timestamp":"2024-08-01T04:15:35.127Z"}
+{"level":"info","message":"User sam (rxeS8bAcSbGLAgEtAAAC) leaving room: general","service":"messaging-app","timestamp":"2024-08-01T04:15:35.127Z"}
+{"level":"info","message":"Main route accessed: GET /api/messages/general","service":"messaging-app","timestamp":"2024-08-01T04:15:35.127Z"}
+{"level":"info","message":"Message route accessed: GET /api/messages/general","service":"messaging-app","timestamp":"2024-08-01T04:15:35.127Z"}
+{"email":"sam@gmail.com","level":"info","message":"User authenticated for protected route","service":"messaging-app","timestamp":"2024-08-01T04:15:35.129Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"Get user profile attempt","service":"messaging-app","timestamp":"2024-08-01T04:15:35.129Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"email":"sam@gmail.com","level":"info","message":"User authenticated for protected route","service":"messaging-app","timestamp":"2024-08-01T04:15:35.130Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"Get messages attempt","room":"general","service":"messaging-app","timestamp":"2024-08-01T04:15:35.130Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"email":"sam@gmail.com","level":"info","message":"User fetched","service":"messaging-app","timestamp":"2024-08-01T04:15:35.132Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"GET /api/auth/user 304 undefined - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.132Z"}
+{"level":"info","message":"Retrieved 4 messages for room general in 7ms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.137Z"}
+{"level":"info","message":"Retrieved 4 messages for room general","service":"messaging-app","timestamp":"2024-08-01T04:15:35.137Z"}
+{"level":"info","message":"GET /api/messages/general 200 996 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:15:35.138Z"}
+{"level":"info","message":"Received message from sam (rxeS8bAcSbGLAgEtAAAC) in room general: testing","service":"messaging-app","timestamp":"2024-08-01T04:15:47.656Z"}
+{"level":"info","message":"Message saved successfully: 66ab0bf3aeeccd981950caee","service":"messaging-app","timestamp":"2024-08-01T04:15:47.668Z"}
+{"level":"info","message":"Broadcasting message to room general: {\n  sender: { _id: new ObjectId('66aabc4dc3b4b38c6d42981a'), username: 'sam' },\n  room: 'general',\n  content: 'testing',\n  isEdited: false,\n  _id: new ObjectId('66ab0bf3aeeccd981950caee'),\n  timestamp: 2024-08-01T04:15:47.659Z,\n  __v: 0,\n  id: '66ab0bf3aeeccd981950caee'\n}","service":"messaging-app","timestamp":"2024-08-01T04:15:47.677Z"}
+{"level":"info","message":"Editing message: 66ab0bf3aeeccd981950caee by sam (rxeS8bAcSbGLAgEtAAAC) in room general","service":"messaging-app","timestamp":"2024-08-01T04:15:53.611Z"}
+{"level":"info","message":"Message edited: 66ab0bf3aeeccd981950caee","service":"messaging-app","timestamp":"2024-08-01T04:15:53.618Z"}
+{"level":"info","message":"Broadcasting updated message to room general: {\n  _id: new ObjectId('66ab0bf3aeeccd981950caee'),\n  sender: { _id: new ObjectId('66aabc4dc3b4b38c6d42981a'), username: 'sam' },\n  room: 'general',\n  content: 'testing1212',\n  isEdited: true,\n  timestamp: 2024-08-01T04:15:47.659Z,\n  __v: 0,\n  id: '66ab0bf3aeeccd981950caee'\n}","service":"messaging-app","timestamp":"2024-08-01T04:15:53.627Z"}
+{"level":"info","message":"Deleting message: 66ab0bf3aeeccd981950caee by sam (rxeS8bAcSbGLAgEtAAAC) in room general","service":"messaging-app","timestamp":"2024-08-01T04:15:54.987Z"}
+{"level":"info","message":"Message deleted: 66ab0bf3aeeccd981950caee","service":"messaging-app","timestamp":"2024-08-01T04:15:54.997Z"}
+{"level":"info","message":"Client disconnected: rxeS8bAcSbGLAgEtAAAC, User: sam","service":"messaging-app","timestamp":"2024-08-01T04:17:33.816Z"}
+{"level":"info","message":"Server running on port 5001","service":"messaging-app","timestamp":"2024-08-01T04:17:53.958Z"}
+{"level":"info","message":"MongoDB connected successfully","service":"messaging-app","timestamp":"2024-08-01T04:17:53.965Z"}
+{"level":"info","message":"OPTIONS /api/auth/login 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.207Z"}
+{"level":"info","message":"Main route accessed: POST /api/auth/login","service":"messaging-app","timestamp":"2024-08-01T04:18:06.212Z"}
+{"level":"info","message":"Auth route accessed: POST /api/auth/login","service":"messaging-app","timestamp":"2024-08-01T04:18:06.212Z"}
+{"email":"sam@gmail.com","level":"info","message":"Login attempt","service":"messaging-app","timestamp":"2024-08-01T04:18:06.213Z"}
+{"email":"sam@gmail.com","level":"info","message":"Login attempt received","service":"messaging-app","timestamp":"2024-08-01T04:18:06.213Z"}
+{"email":"sam@gmail.com","found":true,"level":"info","message":"User found for login attempt","service":"messaging-app","timestamp":"2024-08-01T04:18:06.221Z"}
+{"level":"info","message":"Password comparison for user 66aabc4dc3b4b38c6d42981a completed in 60ms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.282Z"}
+{"email":"sam@gmail.com","level":"info","message":"Login successful","service":"messaging-app","timestamp":"2024-08-01T04:18:06.284Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"POST /api/auth/login 200 207 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.285Z"}
+{"level":"info","message":"OPTIONS /api/auth/user 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.304Z"}
+{"level":"info","message":"Main route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:18:06.305Z"}
+{"level":"info","message":"Auth route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:18:06.305Z"}
+{"level":"info","message":"OPTIONS /api/auth/user 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.308Z"}
+{"email":"sam@gmail.com","level":"info","message":"User authenticated for protected route","service":"messaging-app","timestamp":"2024-08-01T04:18:06.309Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"Get user profile attempt","service":"messaging-app","timestamp":"2024-08-01T04:18:06.309Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"email":"sam@gmail.com","level":"info","message":"User fetched","service":"messaging-app","timestamp":"2024-08-01T04:18:06.314Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"GET /api/auth/user 304 undefined - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.315Z"}
+{"level":"info","message":"New client connected: dIiFSETj9TmDJSzVAAAC, User: sam","service":"messaging-app","timestamp":"2024-08-01T04:18:06.317Z"}
+{"level":"info","message":"Main route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:18:06.318Z"}
+{"level":"info","message":"Auth route accessed: GET /api/auth/user","service":"messaging-app","timestamp":"2024-08-01T04:18:06.318Z"}
+{"level":"info","message":"User sam (dIiFSETj9TmDJSzVAAAC) joining room: general","service":"messaging-app","timestamp":"2024-08-01T04:18:06.320Z"}
+{"email":"sam@gmail.com","level":"info","message":"User authenticated for protected route","service":"messaging-app","timestamp":"2024-08-01T04:18:06.321Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"Get user profile attempt","service":"messaging-app","timestamp":"2024-08-01T04:18:06.321Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"OPTIONS /api/messages/general 204 0 - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.322Z"}
+{"email":"sam@gmail.com","level":"info","message":"User fetched","service":"messaging-app","timestamp":"2024-08-01T04:18:06.322Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"GET /api/auth/user 304 undefined - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.322Z"}
+{"level":"info","message":"Main route accessed: GET /api/messages/general","service":"messaging-app","timestamp":"2024-08-01T04:18:06.322Z"}
+{"level":"info","message":"Message route accessed: GET /api/messages/general","service":"messaging-app","timestamp":"2024-08-01T04:18:06.323Z"}
+{"email":"sam@gmail.com","level":"info","message":"User authenticated for protected route","service":"messaging-app","timestamp":"2024-08-01T04:18:06.325Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"Get messages attempt","room":"general","service":"messaging-app","timestamp":"2024-08-01T04:18:06.325Z","userId":"66aabc4dc3b4b38c6d42981a"}
+{"level":"info","message":"Retrieved 4 messages for room general in 6ms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.331Z"}
+{"level":"info","message":"Retrieved 4 messages for room general","service":"messaging-app","timestamp":"2024-08-01T04:18:06.331Z"}
+{"level":"info","message":"GET /api/messages/general 304 undefined - undefinedms","service":"messaging-app","timestamp":"2024-08-01T04:18:06.332Z"}
+{"level":"info","message":"User sam (dIiFSETj9TmDJSzVAAAC) joining room: general","service":"messaging-app","timestamp":"2024-08-01T04:18:06.422Z"}
+{"level":"info","message":"User sam (dIiFSETj9TmDJSzVAAAC) leaving room: general","service":"messaging-app","timestamp":"2024-08-01T04:18:06.422Z"}
+{"level":"info","message":"Received message from sam (dIiFSETj9TmDJSzVAAAC) in room general: helllooo","service":"messaging-app","timestamp":"2024-08-01T04:18:14.492Z"}
+{"level":"info","message":"Message saved successfully: 66ab0c86514dc6b08c7d712f","service":"messaging-app","timestamp":"2024-08-01T04:18:14.504Z"}
+{"level":"info","message":"Broadcasting message to room general: {\n  sender: { _id: new ObjectId('66aabc4dc3b4b38c6d42981a'), username: 'sam' },\n  room: 'general',\n  content: 'helllooo',\n  isEdited: false,\n  _id: new ObjectId('66ab0c86514dc6b08c7d712f'),\n  timestamp: 2024-08-01T04:18:14.496Z,\n  __v: 0,\n  id: '66ab0c86514dc6b08c7d712f'\n}","service":"messaging-app","timestamp":"2024-08-01T04:18:14.513Z"}

@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Message = require("../models/Message");
 const { saveMessage } = require("../controllers/messageController");
+const logger = require("../utils/logger");
 
 module.exports = (io) => {
   const userSockets = new Map();
@@ -29,18 +30,18 @@ module.exports = (io) => {
 
   // Socket.io event handlers
   io.on("connection", (socket) => {
-    console.log(
+    logger.info(
       `New client connected: ${socket.id}, User: ${socket.user.username}`
     );
     userSockets.set(socket.id, socket.user);
 
     socket.on("joinRoom", (room) => {
-      console.log(
+      logger.info(
         `User ${socket.user.username} (${socket.id}) joining room: ${room}`
       );
       socket.rooms.forEach((r) => {
         if (r !== socket.id) {
-          console.log(
+          logger.info(
             `User ${socket.user.username} (${socket.id}) leaving room: ${r}`
           );
           socket.leave(r);
@@ -50,7 +51,7 @@ module.exports = (io) => {
     });
 
     socket.on("chatMessage", async (data) => {
-      console.log(
+      logger.info(
         `Received message from ${socket.user.username} (${socket.id}) in room ${data.room}: ${data.content}`
       );
       try {
@@ -62,12 +63,12 @@ module.exports = (io) => {
 
         await savedMessage.populate("sender", "username");
 
-        console.log(
+        logger.info(
           `Broadcasting message to room ${data.room}: ${savedMessage}`
         );
         io.in(data.room).emit("message", savedMessage);
       } catch (error) {
-        console.error("Error saving message:", error);
+        logger.error("Error saving message:", error);
         socket.emit("messageError", {
           error: "Failed to save message",
         });
@@ -75,7 +76,7 @@ module.exports = (io) => {
     });
 
     socket.on("editMessage", async (data) => {
-      console.log(
+      logger.info(
         `Editing message: ${data.messageId} by ${socket.user.username} (${socket.id}) in room ${data.room}`
       );
       try {
@@ -83,12 +84,12 @@ module.exports = (io) => {
         const message = await Message.findById(messageId);
 
         if (!message) {
-          console.log(`Message not found: ${messageId}`);
+          logger.warn(`Message not found: ${messageId}`);
           return socket.emit("messageError", { error: "Message not found" });
         }
 
         if (message.sender.toString() !== socket.user._id.toString()) {
-          console.log(
+          logger.warn(
             `Unauthorized edit attempt by ${socket.user.username} (${socket.id})`
           );
           return socket.emit("messageError", {
@@ -101,18 +102,18 @@ module.exports = (io) => {
         await message.save();
 
         const updatedMessage = await message.populate("sender", "username");
-        console.log(
+        logger.info(
           `Broadcasting updated message to room ${room}: ${updatedMessage}`
         );
         io.in(room).emit("messageUpdated", updatedMessage);
       } catch (error) {
-        console.error("Error editing message:", error);
+        logger.error("Error editing message:", error);
         socket.emit("messageError", { error: "Failed to edit message" });
       }
     });
 
     socket.on("deleteMessage", async (data) => {
-      console.log(
+      logger.info(
         `Deleting message: ${data.messageId} by ${socket.user.username} (${socket.id}) in room ${data.room}`
       );
       try {
@@ -120,12 +121,12 @@ module.exports = (io) => {
         const message = await Message.findById(messageId);
 
         if (!message) {
-          console.log(`Message not found: ${messageId}`);
+          logger.warn(`Message not found: ${messageId}`);
           return socket.emit("messageError", { error: "Message not found" });
         }
 
         if (message.sender.toString() !== socket.user._id.toString()) {
-          console.log(
+          logger.warn(
             `Unauthorized delete attempt by ${socket.user.username} (${socket.id})`
           );
           return socket.emit("messageError", {
@@ -134,16 +135,16 @@ module.exports = (io) => {
         }
 
         await Message.deleteOne({ _id: messageId });
-        console.log(`Message deleted: ${messageId}`);
+        logger.info(`Message deleted: ${messageId}`);
         io.in(room).emit("messageDeleted", messageId);
       } catch (error) {
-        console.error("Error deleting message:", error);
+        logger.error("Error deleting message:", error);
         socket.emit("messageError", { error: "Failed to delete message" });
       }
     });
 
     socket.on("disconnect", () => {
-      console.log(
+      logger.info(
         `Client disconnected: ${socket.id}, User: ${socket.user.username}`
       );
       userSockets.delete(socket.id);

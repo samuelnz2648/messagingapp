@@ -9,6 +9,7 @@ const routes = require("./routes");
 const configExpress = require("./config/express");
 const configSocketIo = require("./config/socketio");
 const errorHandlers = require("./utils/errorHandlers");
+const logger = require("./utils/logger");
 
 dotenv.config();
 
@@ -46,6 +47,6 @@ errorHandlers.handleUnhandledRejection(server);
 errorHandlers.handleUncaughtException();
 
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => logger.info(`Server running on port ${PORT}`));
 
 module.exports = app;
