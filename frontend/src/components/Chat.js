@@ -9,11 +9,14 @@ import MessageList from "./MessageList";
 import MessageForm from "./MessageForm";
 import {
   ChatContainer,
+  ChatSidebar,
+  ChatMain,
   ChatHeader,
-  RoomSelector,
-  RoomButton,
+  RoomList,
+  RoomItem,
   ConnectionStatus,
   LogoutButton,
+  MessagesContainer,
 } from "../styles/ChatStyles";
 
 function Chat() {
@@ -21,8 +24,13 @@ function Chat() {
   const { joinRoom, sendMessage, deleteMessage } = useChatSocket();
   const { fetchMessages, fetchUsername } = useChatApi();
   const messagesEndRef = useRef(null);
+  const prevMessageCountRef = useRef(0);
   const navigate = useNavigate();
   const [editingMessageContent, setEditingMessageContent] = useState("");
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     const token = state.token || localStorage.getItem("token");
@@ -44,7 +52,10 @@ function Chat() {
   }, [state.room, state.connected, joinRoom, fetchMessages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (state.messages.length > prevMessageCountRef.current) {
+      scrollToBottom();
+    }
+    prevMessageCountRef.current = state.messages.length;
   }, [state.messages]);
 
   const handleRoomChange = (newRoom) => {
@@ -66,6 +77,10 @@ function Chat() {
     }
   };
 
+  const handleDeleteMessage = (messageId) => {
+    deleteMessage(messageId);
+  };
+
   const logout = () => {
     console.log("Logging out");
     localStorage.removeItem("token");
@@ -75,40 +90,55 @@ function Chat() {
 
   return (
     <ChatContainer>
-      <ChatHeader>
-        <h2 className="text-xl font-bold">Chat Room: {state.room}</h2>
-        <div className="flex items-center space-x-4">
-          <span>Logged in as: {state.username}</span>
-          <LogoutButton onClick={logout}>Logout</LogoutButton>
-        </div>
-      </ChatHeader>
-      <RoomSelector>
-        <RoomButton onClick={() => handleRoomChange("general")}>
-          General
-        </RoomButton>
-        <RoomButton onClick={() => handleRoomChange("random")}>
-          Random
-        </RoomButton>
-      </RoomSelector>
-      <MessageList
-        messages={state.messages}
-        username={state.username}
-        onDeleteMessage={deleteMessage}
-        onEditMessage={handleEditMessage}
-      />
-      <div ref={messagesEndRef} />
-      <MessageForm
-        onSendMessage={handleSendMessage}
-        isEditing={!!state.editingMessageId}
-        isSending={state.isSending}
-        isConnected={state.connected}
-        editingMessageContent={editingMessageContent}
-      />
-      {!state.connected && (
-        <ConnectionStatus>
-          Disconnected. Trying to reconnect...
-        </ConnectionStatus>
-      )}
+      <ChatSidebar>
+        <ChatHeader>
+          <h2 className="text-xl font-bold">Chat Rooms</h2>
+        </ChatHeader>
+        <RoomList>
+          <RoomItem
+            onClick={() => handleRoomChange("general")}
+            $active={state.room === "general"}
+          >
+            General
+          </RoomItem>
+          <RoomItem
+            onClick={() => handleRoomChange("random")}
+            $active={state.room === "random"}
+          >
+            Random
+          </RoomItem>
+        </RoomList>
+      </ChatSidebar>
+      <ChatMain>
+        <ChatHeader>
+          <h2 className="text-xl font-bold">Chat Room: {state.room}</h2>
+          <div className="flex items-center space-x-4">
+            <span>Logged in as: {state.username}</span>
+            <LogoutButton onClick={logout}>Logout</LogoutButton>
+          </div>
+        </ChatHeader>
+        <MessagesContainer>
+          <MessageList
+            messages={state.messages}
+            username={state.username}
+            onDeleteMessage={handleDeleteMessage}
+            onEditMessage={handleEditMessage}
+          />
+          <div ref={messagesEndRef} />
+        </MessagesContainer>
+        <MessageForm
+          onSendMessage={handleSendMessage}
+          isEditing={!!state.editingMessageId}
+          isSending={state.isSending}
+          isConnected={state.connected}
+          editingMessageContent={editingMessageContent}
+        />
+        {!state.connected && (
+          <ConnectionStatus>
+            Disconnected. Trying to reconnect...
+          </ConnectionStatus>
+        )}
+      </ChatMain>
     </ChatContainer>
   );
 }

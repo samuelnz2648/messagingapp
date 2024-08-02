@@ -3,25 +3,56 @@
 import styled from "styled-components";
 
 export const ChatContainer = styled.div.attrs({
-  className: "flex flex-col h-screen bg-gray-100",
+  className: "flex h-screen bg-gray-100",
 })``;
+
+export const ChatSidebar = styled.div.attrs({
+  className: "w-64 bg-gray-200 flex flex-col",
+})``;
+
+export const ChatMain = styled.div.attrs({
+  className: "flex-1 flex flex-col",
+})`
+  height: 100vh;
+`;
 
 export const ChatHeader = styled.div.attrs({
-  className: "bg-blue-600 text-white p-4 flex justify-between items-center",
-})``;
-
-export const RoomSelector = styled.div.attrs({
-  className: "bg-gray-200 p-2 flex space-x-2",
-})``;
-
-export const RoomButton = styled.button.attrs({
   className:
-    "px-4 py-2 bg-white rounded shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500",
+    "bg-blue-600 text-white p-4 flex justify-between items-center h-16",
 })``;
+
+export const RoomList = styled.div.attrs({
+  className: "flex-1 overflow-y-auto",
+})``;
+
+export const RoomItem = styled.button.attrs({
+  className: "w-full text-left px-4 py-2 hover:bg-gray-300 focus:outline-none",
+})`
+  background-color: ${(props) => (props.$active ? "#e5e7eb" : "transparent")};
+  font-weight: ${(props) => (props.$active ? "bold" : "normal")};
+`;
 
 export const MessagesContainer = styled.div.attrs({
-  className: "flex-grow overflow-y-auto p-4 space-y-4",
-})``;
+  className: "flex-grow overflow-y-auto p-4",
+})`
+  height: calc(100vh - 64px - 60px); // Subtract header and form heights
+`;
+
+export const MessageItem = styled.div`
+  margin-bottom: 1rem;
+  max-height: 1000px; // Adjust this value based on your maximum message height
+  opacity: 1;
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+
+  ${(props) =>
+    props.$isDeleting &&
+    `
+    max-height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+  `}
+`;
 
 export const MessageWrapper = styled.div.attrs({
   className: "flex",

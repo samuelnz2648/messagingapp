@@ -1,45 +1,66 @@
 // messagingapp/frontend/src/components/MessageList.js
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  MessagesContainer,
   MessageWrapper,
   MessageContent,
   MessageSender,
   MessageActions,
   EditButton,
   DeleteButton,
+  MessageItem,
 } from "../styles/ChatStyles";
 
 function MessageList({ messages, username, onDeleteMessage, onEditMessage }) {
+  const [deletingMessages, setDeletingMessages] = useState({});
+
+  useEffect(() => {
+    const newDeletingMessages = {};
+    messages.forEach((msg) => {
+      newDeletingMessages[msg._id] = false;
+    });
+    setDeletingMessages(newDeletingMessages);
+  }, [messages]);
+
+  const handleDelete = (messageId) => {
+    setDeletingMessages((prev) => ({ ...prev, [messageId]: true }));
+    setTimeout(() => {
+      onDeleteMessage(messageId);
+    }, 300); // This should match the transition duration in CSS
+  };
+
   return (
-    <MessagesContainer>
+    <>
       {messages.map((msg) => {
         const isOwnMessage = msg.sender.username === username;
         return (
-          <MessageWrapper key={msg._id} $isOwnMessage={isOwnMessage}>
-            <MessageContent $isOwnMessage={isOwnMessage}>
-              <MessageSender $isOwnMessage={isOwnMessage}>
-                {msg.sender.username}
-              </MessageSender>
-              {msg.content}
-              {msg.isEdited && <span className="edited-tag"> (edited)</span>}
-            </MessageContent>
-            {isOwnMessage && (
-              <MessageActions>
-                <EditButton onClick={() => onEditMessage(msg._id, msg.content)}>
-                  Edit
-                </EditButton>
-                <DeleteButton onClick={() => onDeleteMessage(msg._id)}>
-                  Delete
-                </DeleteButton>
-              </MessageActions>
-            )}
-          </MessageWrapper>
+          <MessageItem key={msg._id} $isDeleting={deletingMessages[msg._id]}>
+            <MessageWrapper $isOwnMessage={isOwnMessage}>
+              <MessageContent $isOwnMessage={isOwnMessage}>
+                <MessageSender $isOwnMessage={isOwnMessage}>
+                  {msg.sender.username}
+                </MessageSender>
+                {msg.content}
+                {msg.isEdited && <span className="edited-tag"> (edited)</span>}
+              </MessageContent>
+              {isOwnMessage && (
+                <MessageActions>
+                  <EditButton
+                    onClick={() => onEditMessage(msg._id, msg.content)}
+                  >
+                    Edit
+                  </EditButton>
+                  <DeleteButton onClick={() => handleDelete(msg._id)}>
+                    Delete
+                  </DeleteButton>
+                </MessageActions>
+              )}
+            </MessageWrapper>
+          </MessageItem>
         );
       })}
-    </MessagesContainer>
+    </>
   );
 }
 
-export default MessageList;
+export default React.memo(MessageList);
