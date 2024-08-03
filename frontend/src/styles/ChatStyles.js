@@ -57,7 +57,7 @@ export const MessageItem = styled.div`
   transition: all 0.3s ease-out;
   animation: ${fadeIn} 0.3s ease-out;
   animation-fill-mode: backwards;
-  animation-delay: ${(props) => props.$index * 0.1}s;
+  animation-delay: 0s; // Remove the delay based on index
 
   ${(props) =>
     props.$isDeleting &&
