@@ -1,4 +1,4 @@
-// src/hooks/useChatSocket.js
+// messagingapp/frontend/src/hooks/useChatSocket.js
 
 import { useEffect, useRef, useCallback } from "react";
 import io from "socket.io-client";
@@ -37,6 +37,11 @@ export function useChatSocket() {
     socketRef.current.on("messageUpdated", (updatedMessage) => {
       console.log("Message updated:", updatedMessage);
       dispatch({ type: "UPDATE_MESSAGE", payload: updatedMessage });
+    });
+
+    socketRef.current.on("messageDeleting", (deletingMessageId) => {
+      console.log("Message deleting:", deletingMessageId);
+      dispatch({ type: "SET_MESSAGE_DELETING", payload: deletingMessageId });
     });
 
     socketRef.current.on("messageDeleted", (deletedMessageId) => {

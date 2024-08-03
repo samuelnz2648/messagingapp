@@ -134,9 +134,15 @@ module.exports = (io) => {
           });
         }
 
-        await Message.deleteOne({ _id: messageId });
-        logger.info(`Message deleted: ${messageId}`);
-        io.in(room).emit("messageDeleted", messageId);
+        // Emit messageDeleting event to all clients in the room
+        io.in(room).emit("messageDeleting", messageId);
+
+        // Delay the actual deletion to allow for animation
+        setTimeout(async () => {
+          await Message.deleteOne({ _id: messageId });
+          logger.info(`Message deleted: ${messageId}`);
+          io.in(room).emit("messageDeleted", messageId);
+        }, 300); // Match this with the client-side animation duration
       } catch (error) {
         logger.error("Error deleting message:", error);
         socket.emit("messageError", { error: "Failed to delete message" });

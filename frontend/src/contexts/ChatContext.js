@@ -27,6 +27,13 @@ function chatReducer(state, action) {
           .map((msg) => (msg._id === action.payload._id ? action.payload : msg))
           .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)),
       };
+    case "SET_MESSAGE_DELETING":
+      return {
+        ...state,
+        messages: state.messages.map((msg) =>
+          msg._id === action.payload ? { ...msg, isDeleting: true } : msg
+        ),
+      };
     case "DELETE_MESSAGE":
       return {
         ...state,
