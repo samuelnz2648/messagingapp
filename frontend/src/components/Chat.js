@@ -59,9 +59,11 @@ function Chat() {
   }, [state.messages]);
 
   const handleRoomChange = (newRoom) => {
-    console.log("Changing room from", state.room, "to", newRoom);
-    dispatch({ type: "SET_MESSAGES", payload: [] });
-    dispatch({ type: "SET_ROOM", payload: newRoom });
+    if (newRoom !== state.room) {
+      console.log("Changing room from", state.room, "to", newRoom);
+      dispatch({ type: "SET_MESSAGES", payload: [] });
+      dispatch({ type: "SET_ROOM", payload: newRoom });
+    }
   };
 
   const handleEditMessage = (messageId, content) => {
