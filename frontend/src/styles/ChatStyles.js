@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/styles/ChatStyles.js
 
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 export const ChatContainer = styled.div.attrs({
   className: "flex h-screen bg-gray-100",
@@ -38,12 +38,26 @@ export const MessagesContainer = styled.div.attrs({
   height: calc(100vh - 64px - 60px); // Subtract header and form heights
 `;
 
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 export const MessageItem = styled.div`
   margin-bottom: 1rem;
-  max-height: 1000px; // Adjust this value based on your maximum message height
+  max-height: 1000px;
   opacity: 1;
   overflow: hidden;
   transition: all 0.3s ease-out;
+  animation: ${fadeIn} 0.3s ease-out;
+  animation-fill-mode: backwards;
+  animation-delay: ${(props) => props.$index * 0.1}s;
 
   ${(props) =>
     props.$isDeleting &&

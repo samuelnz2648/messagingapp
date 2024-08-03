@@ -14,10 +14,14 @@ import {
 function MessageList({ messages, username, onDeleteMessage, onEditMessage }) {
   return (
     <>
-      {messages.map((msg) => {
+      {messages.map((msg, index) => {
         const isOwnMessage = msg.sender.username === username;
         return (
-          <MessageItem key={msg._id} $isDeleting={msg.isDeleting}>
+          <MessageItem
+            key={msg._id}
+            $isDeleting={msg.isDeleting}
+            $index={index}
+          >
             <MessageWrapper $isOwnMessage={isOwnMessage}>
               <MessageContent $isOwnMessage={isOwnMessage}>
                 <MessageSender $isOwnMessage={isOwnMessage}>
