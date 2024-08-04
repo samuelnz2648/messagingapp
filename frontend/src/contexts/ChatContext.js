@@ -6,7 +6,7 @@ const ChatContext = createContext();
 
 const initialState = {
   messages: [],
-  room: "general",
+  room: null, // Changed from "general" to null
   connected: false,
   username: "",
   isSending: false,

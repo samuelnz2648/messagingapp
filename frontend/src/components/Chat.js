@@ -17,6 +17,7 @@ import {
   ConnectionStatus,
   LogoutButton,
   MessagesContainer,
+  WelcomeMessage,
 } from "../styles/ChatStyles";
 
 function Chat() {
@@ -45,7 +46,7 @@ function Chat() {
   }, [state.token, navigate, fetchUsername, dispatch]);
 
   useEffect(() => {
-    if (state.connected) {
+    if (state.connected && state.room) {
       joinRoom(state.room);
       fetchMessages();
     }
@@ -113,28 +114,36 @@ function Chat() {
       </ChatSidebar>
       <ChatMain>
         <ChatHeader>
-          <h2 className="text-xl font-bold">Chat Room: {state.room}</h2>
+          <h2 className="text-xl font-bold">
+            {state.room ? `Chat Room: ${state.room}` : "Welcome"}
+          </h2>
           <div className="flex items-center space-x-4">
             <span>Logged in as: {state.username}</span>
             <LogoutButton onClick={logout}>Logout</LogoutButton>
           </div>
         </ChatHeader>
         <MessagesContainer>
-          <MessageList
-            messages={state.messages}
-            username={state.username}
-            onDeleteMessage={handleDeleteMessage}
-            onEditMessage={handleEditMessage}
-          />
+          {state.room ? (
+            <MessageList
+              messages={state.messages}
+              username={state.username}
+              onDeleteMessage={handleDeleteMessage}
+              onEditMessage={handleEditMessage}
+            />
+          ) : (
+            <WelcomeMessage>Click on a chat to start chatting!</WelcomeMessage>
+          )}
           <div ref={messagesEndRef} />
         </MessagesContainer>
-        <MessageForm
-          onSendMessage={handleSendMessage}
-          isEditing={!!state.editingMessageId}
-          isSending={state.isSending}
-          isConnected={state.connected}
-          editingMessageContent={editingMessageContent}
-        />
+        {state.room && (
+          <MessageForm
+            onSendMessage={handleSendMessage}
+            isEditing={!!state.editingMessageId}
+            isSending={state.isSending}
+            isConnected={state.connected}
+            editingMessageContent={editingMessageContent}
+          />
+        )}
         {!state.connected && (
           <ConnectionStatus>
             Disconnected. Trying to reconnect...

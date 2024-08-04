@@ -126,3 +126,8 @@ export const EditButton = styled.button.attrs({
 export const DeleteButton = styled.button.attrs({
   className: "bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600",
 })``;
+
+// New component for the welcome message
+export const WelcomeMessage = styled.div.attrs({
+  className: "text-center text-gray-600 text-xl mt-8",
+})``;
