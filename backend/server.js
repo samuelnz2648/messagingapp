@@ -7,7 +7,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/database");
 const routes = require("./routes");
 const configExpress = require("./config/express");
-const configSocketIo = require("./config/socketio");
+const configureSocketIO = require("./config/socketio");
 const errorHandlers = require("./utils/errorHandlers");
 const logger = require("./utils/logger");
 
@@ -38,7 +38,7 @@ app.use(errorHandlers.handle404);
 app.use(errorHandlers.globalErrorHandler);
 
 // Configure Socket.io
-configSocketIo(io);
+configureSocketIO(io);
 
 // Handle unhandled promise rejections
 errorHandlers.handleUnhandledRejection(server);
