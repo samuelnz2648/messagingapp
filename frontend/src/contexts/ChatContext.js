@@ -6,12 +6,13 @@ const ChatContext = createContext();
 
 const initialState = {
   messages: [],
-  room: null, // Changed from "general" to null
+  rooms: [], // New field to store available rooms
+  currentRoom: null,
   connected: false,
   username: "",
   isSending: false,
   editingMessageId: null,
-  token: null, // We'll set this in useEffect
+  token: null,
 };
 
 function chatReducer(state, action) {
@@ -39,8 +40,16 @@ function chatReducer(state, action) {
         ...state,
         messages: state.messages.filter((msg) => msg._id !== action.payload),
       };
-    case "SET_ROOM":
-      return { ...state, room: action.payload, messages: [] };
+    case "SET_ROOMS":
+      return { ...state, rooms: action.payload };
+    case "ADD_ROOM":
+      return { ...state, rooms: [...state.rooms, action.payload] };
+    case "SET_CURRENT_ROOM":
+      return { ...state, currentRoom: action.payload, messages: [] };
+    case "SET_ROOM_JOINED":
+      return state.currentRoom && state.currentRoom._id === action.payload
+        ? { ...state, currentRoom: { ...state.currentRoom, joined: true } }
+        : state;
     case "SET_CONNECTED":
       return { ...state, connected: action.payload };
     case "SET_USERNAME":

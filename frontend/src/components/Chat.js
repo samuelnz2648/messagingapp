@@ -18,16 +18,18 @@ import {
   LogoutButton,
   MessagesContainer,
   WelcomeMessage,
+  CreateRoomButton,
 } from "../styles/ChatStyles";
 
 function Chat() {
   const { state, dispatch } = useChatContext();
   const { joinRoom, sendMessage, deleteMessage } = useChatSocket();
-  const { fetchMessages, fetchUsername } = useChatApi();
+  const { fetchMessages, fetchUsername, fetchRooms, createRoom } = useChatApi();
   const messagesEndRef = useRef(null);
   const prevMessageCountRef = useRef(0);
   const navigate = useNavigate();
   const [editingMessageContent, setEditingMessageContent] = useState("");
+  const [newRoomName, setNewRoomName] = useState("");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,15 +44,16 @@ function Chat() {
         dispatch({ type: "SET_TOKEN", payload: token });
       }
       fetchUsername();
+      fetchRooms();
     }
-  }, [state.token, navigate, fetchUsername, dispatch]);
+  }, [state.token, navigate, fetchUsername, fetchRooms, dispatch]);
 
   useEffect(() => {
-    if (state.connected && state.room) {
-      joinRoom(state.room);
-      fetchMessages();
+    if (state.connected && state.currentRoom && !state.currentRoom.joined) {
+      joinRoom(state.currentRoom._id);
+      fetchMessages(state.currentRoom._id);
     }
-  }, [state.room, state.connected, joinRoom, fetchMessages]);
+  }, [state.currentRoom, state.connected, joinRoom, fetchMessages]);
 
   useEffect(() => {
     if (state.messages.length > prevMessageCountRef.current) {
@@ -59,11 +62,35 @@ function Chat() {
     prevMessageCountRef.current = state.messages.length;
   }, [state.messages]);
 
-  const handleRoomChange = (newRoom) => {
-    if (newRoom !== state.room) {
-      console.log("Changing room from", state.room, "to", newRoom);
+  const handleRoomChange = (roomId) => {
+    const newRoom = state.rooms.find((room) => room._id === roomId);
+    if (
+      newRoom &&
+      (!state.currentRoom || newRoom._id !== state.currentRoom._id)
+    ) {
+      console.log(
+        "Changing room from",
+        state.currentRoom?.name,
+        "to",
+        newRoom.name
+      );
       dispatch({ type: "SET_MESSAGES", payload: [] });
-      dispatch({ type: "SET_ROOM", payload: newRoom });
+      dispatch({
+        type: "SET_CURRENT_ROOM",
+        payload: { ...newRoom, joined: false },
+      });
+    }
+  };
+
+  const handleCreateRoom = async () => {
+    if (newRoomName.trim()) {
+      try {
+        const newRoom = await createRoom({ name: newRoomName.trim() });
+        setNewRoomName("");
+        handleRoomChange(newRoom._id);
+      } catch (error) {
+        console.error("Failed to create room:", error);
+      }
     }
   };
 
@@ -98,24 +125,35 @@ function Chat() {
           <h2 className="text-xl font-bold">Chat Rooms</h2>
         </ChatHeader>
         <RoomList>
-          <RoomItem
-            onClick={() => handleRoomChange("general")}
-            $active={state.room === "general"}
-          >
-            General
-          </RoomItem>
-          <RoomItem
-            onClick={() => handleRoomChange("random")}
-            $active={state.room === "random"}
-          >
-            Random
-          </RoomItem>
+          {state.rooms.map((room) => (
+            <RoomItem
+              key={room._id}
+              onClick={() => handleRoomChange(room._id)}
+              $active={state.currentRoom && state.currentRoom._id === room._id}
+            >
+              {room.name}
+            </RoomItem>
+          ))}
         </RoomList>
+        <div className="p-4">
+          <input
+            type="text"
+            value={newRoomName}
+            onChange={(e) => setNewRoomName(e.target.value)}
+            placeholder="New room name"
+            className="w-full p-2 mb-2 border rounded"
+          />
+          <CreateRoomButton onClick={handleCreateRoom}>
+            Create Room
+          </CreateRoomButton>
+        </div>
       </ChatSidebar>
       <ChatMain>
         <ChatHeader>
           <h2 className="text-xl font-bold">
-            {state.room ? `Chat Room: ${state.room}` : "Welcome"}
+            {state.currentRoom
+              ? `Chat Room: ${state.currentRoom.name}`
+              : "Welcome"}
           </h2>
           <div className="flex items-center space-x-4">
             <span>Logged in as: {state.username}</span>
@@ -123,7 +161,7 @@ function Chat() {
           </div>
         </ChatHeader>
         <MessagesContainer>
-          {state.room ? (
+          {state.currentRoom ? (
             <MessageList
               messages={state.messages}
               username={state.username}
@@ -135,7 +173,7 @@ function Chat() {
           )}
           <div ref={messagesEndRef} />
         </MessagesContainer>
-        {state.room && (
+        {state.currentRoom && (
           <MessageForm
             onSendMessage={handleSendMessage}
             isEditing={!!state.editingMessageId}

@@ -6,7 +6,7 @@ import { useChatContext } from "../contexts/ChatContext";
 
 export function useChatSocket() {
   const { state, dispatch } = useChatContext();
-  const { token, room } = state;
+  const { token, currentRoom } = state;
   const socketRef = useRef(null);
 
   const initializeSocket = useCallback(() => {
@@ -21,7 +21,9 @@ export function useChatSocket() {
     socketRef.current.on("connect", () => {
       console.log("Socket connected");
       dispatch({ type: "SET_CONNECTED", payload: true });
-      socketRef.current.emit("joinRoom", room);
+      if (currentRoom) {
+        socketRef.current.emit("joinRoom", currentRoom._id);
+      }
     });
 
     socketRef.current.on("disconnect", () => {
@@ -48,7 +50,29 @@ export function useChatSocket() {
       console.log("Message deleted:", deletedMessageId);
       dispatch({ type: "DELETE_MESSAGE", payload: deletedMessageId });
     });
-  }, [token, room, dispatch]);
+
+    socketRef.current.on("roomJoined", ({ roomId, name }) => {
+      console.log(`Joined room: ${name} (${roomId})`);
+      dispatch({ type: "SET_ROOM_JOINED", payload: { _id: roomId, name } });
+    });
+
+    socketRef.current.on("roomLeft", ({ roomId, name }) => {
+      console.log(`Left room: ${name} (${roomId})`);
+      if (currentRoom && currentRoom._id === roomId) {
+        dispatch({ type: "SET_CURRENT_ROOM", payload: null });
+      }
+    });
+
+    socketRef.current.on("userJoined", ({ username }) => {
+      console.log(`User joined: ${username}`);
+      // You can dispatch an action here to update the UI if needed
+    });
+
+    socketRef.current.on("userLeft", ({ username }) => {
+      console.log(`User left: ${username}`);
+      // You can dispatch an action here to update the UI if needed
+    });
+  }, [token, dispatch, currentRoom]);
 
   useEffect(() => {
     initializeSocket();
@@ -57,31 +81,44 @@ export function useChatSocket() {
       if (socketRef.current) {
         console.log("Cleaning up socket connection");
         socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
   }, [initializeSocket]);
 
-  const joinRoom = useCallback((newRoom) => {
-    console.log("Joining room:", newRoom);
-    socketRef.current.emit("joinRoom", newRoom);
+  const joinRoom = useCallback((roomId) => {
+    console.log("Joining room:", roomId);
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("joinRoom", roomId);
+    }
+  }, []);
+
+  const leaveRoom = useCallback((roomId) => {
+    console.log("Leaving room:", roomId);
+    socketRef.current.emit("leaveRoom", roomId);
   }, []);
 
   const sendMessage = useCallback(
     (content) => {
-      if (content.trim() && state.connected && !state.isSending) {
+      if (
+        content.trim() &&
+        state.connected &&
+        !state.isSending &&
+        state.currentRoom
+      ) {
         dispatch({ type: "SET_IS_SENDING", payload: true });
         if (state.editingMessageId) {
           console.log("Editing message:", state.editingMessageId);
           socketRef.current.emit("editMessage", {
             messageId: state.editingMessageId,
             content: content.trim(),
-            room: state.room,
+            room: state.currentRoom._id,
           });
           dispatch({ type: "SET_EDITING_MESSAGE_ID", payload: null });
         } else {
           console.log("Sending new message");
           socketRef.current.emit("chatMessage", {
-            room: state.room,
+            room: state.currentRoom._id,
             content: content.trim(),
           });
         }
@@ -92,18 +129,23 @@ export function useChatSocket() {
       state.connected,
       state.isSending,
       state.editingMessageId,
-      state.room,
+      state.currentRoom,
       dispatch,
     ]
   );
 
   const deleteMessage = useCallback(
     (messageId) => {
-      console.log("Deleting message:", messageId);
-      socketRef.current.emit("deleteMessage", { messageId, room: state.room });
+      if (state.currentRoom) {
+        console.log("Deleting message:", messageId);
+        socketRef.current.emit("deleteMessage", {
+          messageId,
+          room: state.currentRoom._id,
+        });
+      }
     },
-    [state.room]
+    [state.currentRoom]
   );
 
-  return { joinRoom, sendMessage, deleteMessage };
+  return { joinRoom, leaveRoom, sendMessage, deleteMessage };
 }

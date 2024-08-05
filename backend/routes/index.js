@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router();
 const authRoutes = require("./authRoutes");
 const messageRoutes = require("./messageRoutes");
+const roomRoutes = require("./roomRoutes");
 const logger = require("../utils/logger");
 
 // Middleware to log access to main route groups
@@ -16,5 +17,6 @@ router.use(logRouteAccess);
 
 router.use("/auth", authRoutes);
 router.use("/messages", messageRoutes);
+router.use("/rooms", roomRoutes);
 
 module.exports = router;

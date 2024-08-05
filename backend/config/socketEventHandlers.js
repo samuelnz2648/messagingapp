@@ -1,29 +1,73 @@
 // messagingapp/backend/config/socketEventHandlers.js
 
 const Message = require("../models/Message");
+const Room = require("../models/Room");
 const { saveMessage } = require("../controllers/messageController");
 const logger = require("../utils/logger");
 
 exports.attachHandlers = (io, socket, userSockets) => {
-  socket.on("joinRoom", handleJoinRoom(socket));
+  socket.on("joinRoom", handleJoinRoom(io, socket));
+  socket.on("leaveRoom", handleLeaveRoom(io, socket));
   socket.on("chatMessage", handleChatMessage(io, socket));
   socket.on("editMessage", handleEditMessage(io, socket));
   socket.on("deleteMessage", handleDeleteMessage(io, socket));
 };
 
-const handleJoinRoom = (socket) => (room) => {
-  logger.info(
-    `User ${socket.user.username} (${socket.id}) joining room: ${room}`
-  );
-  socket.rooms.forEach((r) => {
-    if (r !== socket.id) {
-      logger.info(
-        `User ${socket.user.username} (${socket.id}) leaving room: ${r}`
-      );
-      socket.leave(r);
+const handleJoinRoom = (io, socket) => async (roomId) => {
+  try {
+    const room = await Room.findById(roomId);
+    if (!room) {
+      logger.warn(`Room not found: ${roomId}`);
+      return socket.emit("roomError", { error: "Room not found" });
     }
-  });
-  socket.join(room);
+
+    if (room.isPrivate && !room.isMember(socket.user._id)) {
+      logger.warn(`Unauthorized join attempt to private room: ${roomId}`);
+      return socket.emit("roomError", {
+        error: "You don't have permission to join this room",
+      });
+    }
+
+    logger.info(
+      `User ${socket.user.username} (${socket.id}) joining room: ${room.name}`
+    );
+
+    socket.rooms.forEach((r) => {
+      if (r !== socket.id) {
+        logger.info(
+          `User ${socket.user.username} (${socket.id}) leaving room: ${r}`
+        );
+        socket.leave(r);
+      }
+    });
+
+    socket.join(roomId);
+    socket.emit("roomJoined", { roomId, name: room.name });
+    io.to(roomId).emit("userJoined", { username: socket.user.username });
+  } catch (error) {
+    logger.error(`Error joining room: ${error.message}`, { error });
+    socket.emit("roomError", { error: "Failed to join room" });
+  }
+};
+
+const handleLeaveRoom = (io, socket) => async (roomId) => {
+  try {
+    const room = await Room.findById(roomId);
+    if (!room) {
+      logger.warn(`Room not found: ${roomId}`);
+      return socket.emit("roomError", { error: "Room not found" });
+    }
+
+    logger.info(
+      `User ${socket.user.username} (${socket.id}) leaving room: ${room.name}`
+    );
+    socket.leave(roomId);
+    socket.emit("roomLeft", { roomId, name: room.name });
+    io.to(roomId).emit("userLeft", { username: socket.user.username });
+  } catch (error) {
+    logger.error(`Error leaving room: ${error.message}`, { error });
+    socket.emit("roomError", { error: "Failed to leave room" });
+  }
 };
 
 const handleChatMessage = (io, socket) => async (data) => {

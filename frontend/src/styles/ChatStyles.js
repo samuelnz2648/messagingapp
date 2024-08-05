@@ -131,3 +131,8 @@ export const DeleteButton = styled.button.attrs({
 export const WelcomeMessage = styled.div.attrs({
   className: "text-center text-gray-600 text-xl mt-8",
 })``;
+
+export const CreateRoomButton = styled.button.attrs({
+  className:
+    "bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500",
+})``;

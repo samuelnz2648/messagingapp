@@ -11,7 +11,8 @@ const messageSchema = new mongoose.Schema(
       required: [true, "A message must have a sender"],
     },
     room: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Room",
       required: [true, "A message must belong to a room"],
     },
     content: {
@@ -52,22 +53,23 @@ messageSchema.methods.isFromUser = function (userId) {
 };
 
 // Static method to get recent messages from a room
-messageSchema.statics.getRecentMessages = async function (room, limit = 50) {
+messageSchema.statics.getRecentMessages = async function (roomId, limit = 50) {
   const startTime = Date.now();
   try {
-    const messages = await this.find({ room })
+    const messages = await this.find({ room: roomId })
       .sort({ timestamp: -1 }) // Sort by timestamp in descending order
       .limit(limit)
-      .populate("sender", "username");
+      .populate("sender", "username")
+      .populate("room", "name");
 
     const duration = Date.now() - startTime;
     logger.info(
-      `Retrieved ${messages.length} messages for room ${room} in ${duration}ms`
+      `Retrieved ${messages.length} messages for room ${roomId} in ${duration}ms`
     );
 
     return messages;
   } catch (error) {
-    logger.error(`Error retrieving messages for room ${room}`, {
+    logger.error(`Error retrieving messages for room ${roomId}`, {
       error: error.message,
       duration: Date.now() - startTime,
     });
