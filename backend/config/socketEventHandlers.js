@@ -28,18 +28,27 @@ const handleJoinRoom = (io, socket) => async (roomId) => {
       });
     }
 
+    // Check if the user is already in the room
+    if (socket.rooms.has(roomId)) {
+      logger.info(
+        `User ${socket.user.username} (${socket.id}) is already in room: ${room.name}`
+      );
+      return socket.emit("roomJoined", { roomId, name: room.name });
+    }
+
     logger.info(
       `User ${socket.user.username} (${socket.id}) joining room: ${room.name}`
     );
 
-    socket.rooms.forEach((r) => {
+    // Leave all other rooms except the socket's own room
+    for (const r of socket.rooms) {
       if (r !== socket.id) {
         logger.info(
           `User ${socket.user.username} (${socket.id}) leaving room: ${r}`
         );
         socket.leave(r);
       }
-    });
+    }
 
     socket.join(roomId);
     socket.emit("roomJoined", { roomId, name: room.name });
