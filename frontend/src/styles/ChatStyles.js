@@ -136,7 +136,15 @@ export const CreateRoomButton = styled.button.attrs({
     "bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500",
 })``;
 
-// New component for the typing indicator
+const typingAnimation = keyframes`
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+`;
+
 export const TypingIndicator = styled.div.attrs({
   className: "text-gray-500 text-sm italic mb-2",
-})``;
+})`
+  animation: ${typingAnimation} 1.5s ease-in-out infinite;
+  transition: opacity 0.3s ease-in-out;
+`;
