@@ -65,12 +65,15 @@ export function useChatSocket() {
 
     socketRef.current.on("userJoined", ({ username }) => {
       console.log(`User joined: ${username}`);
-      // You can dispatch an action here to update the UI if needed
     });
 
     socketRef.current.on("userLeft", ({ username }) => {
       console.log(`User left: ${username}`);
-      // You can dispatch an action here to update the UI if needed
+    });
+
+    socketRef.current.on("userTyping", ({ username, isTyping }) => {
+      console.log(`User ${username} is ${isTyping ? "typing" : "not typing"}`);
+      dispatch({ type: "SET_USER_TYPING", payload: { username, isTyping } });
     });
   }, [token, dispatch, currentRoom]);
 
@@ -147,5 +150,18 @@ export function useChatSocket() {
     [state.currentRoom]
   );
 
-  return { joinRoom, leaveRoom, sendMessage, deleteMessage };
+  const sendTypingStatus = useCallback(
+    (isTyping) => {
+      if (state.currentRoom) {
+        console.log("Sending typing status:", isTyping);
+        socketRef.current.emit("typing", {
+          room: state.currentRoom._id,
+          isTyping,
+        });
+      }
+    },
+    [state.currentRoom]
+  );
+
+  return { joinRoom, leaveRoom, sendMessage, deleteMessage, sendTypingStatus };
 }

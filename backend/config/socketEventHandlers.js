@@ -11,6 +11,7 @@ exports.attachHandlers = (io, socket, userSockets) => {
   socket.on("chatMessage", handleChatMessage(io, socket));
   socket.on("editMessage", handleEditMessage(io, socket));
   socket.on("deleteMessage", handleDeleteMessage(io, socket));
+  socket.on("typing", handleTyping(io, socket));
 };
 
 const handleJoinRoom = (io, socket) => async (roomId) => {
@@ -172,4 +173,17 @@ const handleDeleteMessage = (io, socket) => async (data) => {
     logger.error("Error deleting message:", error);
     socket.emit("messageError", { error: "Failed to delete message" });
   }
+};
+
+const handleTyping = (io, socket) => (data) => {
+  const { room, isTyping } = data;
+  logger.info(
+    `User ${socket.user.username} is ${
+      isTyping ? "typing" : "not typing"
+    } in room ${room}`
+  );
+  socket.to(room).emit("userTyping", {
+    username: socket.user.username,
+    isTyping,
+  });
 };

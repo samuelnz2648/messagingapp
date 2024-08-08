@@ -6,13 +6,14 @@ const ChatContext = createContext();
 
 const initialState = {
   messages: [],
-  rooms: [], // New field to store available rooms
+  rooms: [],
   currentRoom: null,
   connected: false,
   username: "",
   isSending: false,
   editingMessageId: null,
   token: null,
+  typingUsers: [],
 };
 
 function chatReducer(state, action) {
@@ -62,6 +63,19 @@ function chatReducer(state, action) {
       return { ...state, token: action.payload };
     case "RESET":
       return { ...initialState, token: null };
+    case "SET_USER_TYPING":
+      const { username, isTyping } = action.payload;
+      let updatedTypingUsers;
+      if (isTyping && !state.typingUsers.includes(username)) {
+        updatedTypingUsers = [...state.typingUsers, username];
+      } else if (!isTyping) {
+        updatedTypingUsers = state.typingUsers.filter(
+          (user) => user !== username
+        );
+      } else {
+        updatedTypingUsers = state.typingUsers;
+      }
+      return { ...state, typingUsers: updatedTypingUsers };
     default:
       return state;
   }

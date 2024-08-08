@@ -1,6 +1,6 @@
-// src/components/MessageForm.js
+// messagingapp/frontend/src/components/MessageForm.js
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   MessageForm as StyledMessageForm,
   MessageInput,
@@ -13,8 +13,11 @@ function MessageForm({
   isSending,
   isConnected,
   editingMessageContent,
+  onTyping,
 }) {
   const [inputMessage, setInputMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (isEditing) {
@@ -24,12 +27,33 @@ function MessageForm({
     }
   }, [isEditing, editingMessageContent]);
 
+  const handleTyping = useCallback(() => {
+    if (!isTyping) {
+      setIsTyping(true);
+      onTyping(true);
+    }
+
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      onTyping(false);
+    }, 3000); // Stop typing after 3 seconds of inactivity
+  }, [isTyping, onTyping]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (inputMessage.trim() && isConnected && !isSending) {
       onSendMessage(inputMessage);
       setInputMessage("");
+      setIsTyping(false);
+      onTyping(false);
+      clearTimeout(typingTimeoutRef.current);
     }
+  };
+
+  const handleInputChange = (e) => {
+    setInputMessage(e.target.value);
+    handleTyping();
   };
 
   return (
@@ -37,7 +61,7 @@ function MessageForm({
       <MessageInput
         type="text"
         value={inputMessage}
-        onChange={(e) => setInputMessage(e.target.value)}
+        onChange={handleInputChange}
         placeholder={isEditing ? "Edit your message..." : "Type a message..."}
         disabled={isSending}
       />

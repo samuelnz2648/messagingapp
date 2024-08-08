@@ -15,11 +15,13 @@ import {
   MessagesContainer,
   WelcomeMessage,
   ConnectionStatus,
+  TypingIndicator,
 } from "../styles/ChatStyles";
 
 function Chat() {
   const { state, dispatch } = useChatContext();
-  const { joinRoom, sendMessage, deleteMessage } = useChatSocket();
+  const { joinRoom, sendMessage, deleteMessage, sendTypingStatus } =
+    useChatSocket();
   const { fetchMessages, fetchUsername, fetchRooms, createRoom } = useChatApi();
   const messagesEndRef = useRef(null);
   const prevMessageCountRef = useRef(0);
@@ -115,12 +117,20 @@ function Chat() {
         />
         <MessagesContainer>
           {state.currentRoom ? (
-            <MessageList
-              messages={state.messages}
-              username={state.username}
-              onDeleteMessage={handleDeleteMessage}
-              onEditMessage={handleEditMessage}
-            />
+            <>
+              <MessageList
+                messages={state.messages}
+                username={state.username}
+                onDeleteMessage={handleDeleteMessage}
+                onEditMessage={handleEditMessage}
+              />
+              {state.typingUsers.length > 0 && (
+                <TypingIndicator>
+                  {state.typingUsers.join(", ")}{" "}
+                  {state.typingUsers.length === 1 ? "is" : "are"} typing...
+                </TypingIndicator>
+              )}
+            </>
           ) : (
             <WelcomeMessage>Click on a chat to start chatting!</WelcomeMessage>
           )}
@@ -133,6 +143,7 @@ function Chat() {
             isSending={state.isSending}
             isConnected={state.connected}
             editingMessageContent={editingMessageContent}
+            onTyping={sendTypingStatus}
           />
         )}
         {!state.connected && (

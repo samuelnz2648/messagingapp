@@ -127,7 +127,6 @@ export const DeleteButton = styled.button.attrs({
   className: "bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600",
 })``;
 
-// New component for the welcome message
 export const WelcomeMessage = styled.div.attrs({
   className: "text-center text-gray-600 text-xl mt-8",
 })``;
@@ -135,4 +134,9 @@ export const WelcomeMessage = styled.div.attrs({
 export const CreateRoomButton = styled.button.attrs({
   className:
     "bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500",
+})``;
+
+// New component for the typing indicator
+export const TypingIndicator = styled.div.attrs({
+  className: "text-gray-500 text-sm italic mb-2",
 })``;
