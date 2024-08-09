@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import RoomList from "./RoomList";
+import CreateRoomModal from "./CreateRoomModal"; // New component for the popup
 import {
   ChatSidebar as StyledChatSidebar,
   ChatHeader,
@@ -9,12 +10,20 @@ import {
 } from "../styles/ChatStyles";
 
 function ChatSidebar({ rooms, currentRoom, onRoomChange, onCreateRoom }) {
-  const [newRoomName, setNewRoomName] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleCreateRoom = () => {
-    if (newRoomName.trim()) {
-      onCreateRoom(newRoomName.trim());
-      setNewRoomName("");
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCreateRoom = (roomName) => {
+    if (roomName.trim()) {
+      onCreateRoom(roomName.trim());
+      setIsModalOpen(false);
     }
   };
 
@@ -29,17 +38,15 @@ function ChatSidebar({ rooms, currentRoom, onRoomChange, onCreateRoom }) {
         onRoomChange={onRoomChange}
       />
       <div className="p-4">
-        <input
-          type="text"
-          value={newRoomName}
-          onChange={(e) => setNewRoomName(e.target.value)}
-          placeholder="New room name"
-          className="w-full p-2 mb-2 border rounded"
-        />
-        <CreateRoomButton onClick={handleCreateRoom}>
+        <CreateRoomButton onClick={handleOpenModal}>
           Create Room
         </CreateRoomButton>
       </div>
+      <CreateRoomModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onCreateRoom={handleCreateRoom}
+      />
     </StyledChatSidebar>
   );
 }
