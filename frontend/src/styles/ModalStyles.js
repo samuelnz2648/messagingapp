@@ -39,3 +39,11 @@ export const Button = styled.button.attrs((props) => ({
       : "bg-gray-300 text-gray-800 hover:bg-gray-400"
   }`,
 }))``;
+
+export const Label = styled.label.attrs({
+  className: "block text-sm font-medium text-gray-700 mb-1",
+})``;
+
+export const FormField = styled.div.attrs({
+  className: "mb-4",
+})``;

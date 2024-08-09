@@ -10,6 +10,8 @@ import {
   ModalFooter,
   Input,
   Button,
+  Label,
+  FormField,
 } from "../styles/ModalStyles";
 
 function CreateRoomModal({ isOpen, onClose, onCreateRoom }) {
@@ -30,13 +32,21 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom }) {
         <ModalHeader>Create New Room</ModalHeader>
         <ModalBody>
           <form onSubmit={handleSubmit}>
-            <Input
-              type="text"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              placeholder="Enter room name"
-              required
-            />
+            <FormField>
+              <Label htmlFor="roomName">Create Room Name</Label>
+              <Input
+                id="roomName"
+                type="text"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                placeholder="Enter room name"
+                required
+              />
+            </FormField>
+            <FormField>
+              <Label>Chat Type</Label>
+              {/* Chat type input will go here */}
+            </FormField>
           </form>
         </ModalBody>
         <ModalFooter>
