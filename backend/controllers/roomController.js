@@ -2,7 +2,7 @@
 
 const Room = require("../models/Room");
 const User = require("../models/User");
-const AppError = require("../utils/errorHandlers");
+const { AppError } = require("../utils/errorHandlers"); // Ensure AppError is imported correctly
 const logger = require("../utils/logger");
 
 exports.createRoom = async (req, res, next) => {
@@ -34,6 +34,18 @@ exports.createRoom = async (req, res, next) => {
         { _id: { $in: members } },
         { $addToSet: { rooms: newRoom._id } }
       );
+    }
+
+    // Emit a socket event for both public and private rooms
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("newRoom", {
+        room: newRoom,
+        isPrivate,
+        createdBy: req.user.username,
+      });
+    } else {
+      logger.warn("Socket.io instance not found when creating a room");
     }
 
     logger.info(`Room created: ${newRoom.name}`, {

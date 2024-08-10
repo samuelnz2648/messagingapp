@@ -6,7 +6,7 @@ import { useChatContext } from "../contexts/ChatContext";
 
 export function useChatSocket() {
   const { state, dispatch } = useChatContext();
-  const { token, currentRoom } = state;
+  const { token, currentRoom, userId } = state;
   const socketRef = useRef(null);
 
   const initializeSocket = useCallback(() => {
@@ -75,7 +75,19 @@ export function useChatSocket() {
       console.log(`User ${username} is ${isTyping ? "typing" : "not typing"}`);
       dispatch({ type: "SET_USER_TYPING", payload: { username, isTyping } });
     });
-  }, [token, dispatch, currentRoom]);
+
+    socketRef.current.on("newPublicRoom", (newRoom) => {
+      console.log("Received newPublicRoom event:", newRoom);
+      dispatch({ type: "ADD_ROOM", payload: newRoom });
+    });
+
+    socketRef.current.on("newRoom", (roomData) => {
+      console.log("Received newRoom event:", roomData);
+      if (!roomData.isPrivate || roomData.room.members.includes(userId)) {
+        dispatch({ type: "ADD_ROOM", payload: roomData.room });
+      }
+    });
+  }, [token, dispatch, currentRoom, userId]);
 
   useEffect(() => {
     initializeSocket();

@@ -44,7 +44,10 @@ function chatReducer(state, action) {
     case "SET_ROOMS":
       return { ...state, rooms: action.payload };
     case "ADD_ROOM":
-      return { ...state, rooms: [...state.rooms, action.payload] };
+      if (!state.rooms.some((room) => room._id === action.payload._id)) {
+        return { ...state, rooms: [...state.rooms, action.payload] };
+      }
+      return state;
     case "SET_CURRENT_ROOM":
       return { ...state, currentRoom: action.payload, messages: [] };
     case "SET_ROOM_JOINED":

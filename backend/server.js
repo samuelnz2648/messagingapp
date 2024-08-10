@@ -23,6 +23,9 @@ const io = socketIo(server, {
   },
 });
 
+// Make io available to our routes
+app.set("io", io);
+
 // Configure Express
 configExpress(app);
 
