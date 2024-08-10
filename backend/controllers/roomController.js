@@ -1,24 +1,45 @@
 // messagingapp/backend/controllers/roomController.js
 
 const Room = require("../models/Room");
+const User = require("../models/User");
 const AppError = require("../utils/errorHandlers");
 const logger = require("../utils/logger");
 
 exports.createRoom = async (req, res, next) => {
   try {
-    const { name, description, isPrivate } = req.body;
+    const { name, description, isPrivate, members } = req.body;
 
+    // Validate members if it's a private room
+    if (
+      isPrivate &&
+      (!members || !Array.isArray(members) || members.length === 0)
+    ) {
+      return next(
+        new AppError("Private rooms must have at least one member", 400)
+      );
+    }
+
+    // Create the room
     const newRoom = await Room.create({
       name,
       description,
       isPrivate,
       createdBy: req.user._id,
-      members: [req.user._id],
+      members: isPrivate ? [req.user._id, ...members] : [req.user._id],
     });
+
+    // If it's a private room, add all members to the room
+    if (isPrivate) {
+      await User.updateMany(
+        { _id: { $in: members } },
+        { $addToSet: { rooms: newRoom._id } }
+      );
+    }
 
     logger.info(`Room created: ${newRoom.name}`, {
       roomId: newRoom._id,
       userId: req.user._id,
+      isPrivate: newRoom.isPrivate,
     });
 
     res.status(201).json({
@@ -187,6 +208,27 @@ exports.leaveRoom = async (req, res, next) => {
       userId: req.user._id,
     });
     next(new AppError("Error leaving room", 500));
+  }
+};
+
+exports.getAllRooms = async (req, res, next) => {
+  try {
+    const rooms = await Room.find({
+      $or: [{ isPrivate: false }, { members: req.user._id }],
+    }).populate("createdBy", "username");
+
+    logger.info(`Retrieved ${rooms.length} rooms for user ${req.user._id}`);
+
+    res.status(200).json({
+      status: "success",
+      results: rooms.length,
+      data: {
+        rooms,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error fetching rooms: ${error.message}`, { error });
+    next(new AppError("Error fetching rooms", 500));
   }
 };
 

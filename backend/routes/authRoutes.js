@@ -29,4 +29,14 @@ router.get("/user", userController.protect, (req, res, next) => {
   userController.getUser(req, res, next);
 });
 
+router.get("/users", userController.protect, (req, res, next) => {
+  logger.info("Get all users attempt", { userId: req.user._id });
+  userController.getAllUsers(req, res, next);
+});
+
+router.get("/user-rooms", userController.protect, (req, res, next) => {
+  logger.info("Get user rooms attempt", { userId: req.user._id });
+  userController.getUserRooms(req, res, next);
+});
+
 module.exports = router;

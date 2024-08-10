@@ -1,6 +1,7 @@
 // messagingapp/backend/controllers/userController.js
 
 const User = require("../models/User");
+const Room = require("../models/Room"); // Add this line to import the Room model
 const jwt = require("jsonwebtoken");
 const AppError = require("../utils/errorHandlers");
 const { promisify } = require("util");
@@ -167,5 +168,47 @@ exports.getUser = async (req, res, next) => {
       userId: req.user.id,
     });
     next(error);
+  }
+};
+
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({ _id: { $ne: req.user._id } }).select(
+      "username"
+    );
+    logger.info(`Retrieved ${users.length} users`);
+    res.json({
+      status: "success",
+      data: { users },
+    });
+  } catch (error) {
+    logger.error("Error fetching all users", {
+      error: error.message,
+      stack: error.stack,
+    });
+    next(error);
+  }
+};
+
+exports.getUserRooms = async (req, res, next) => {
+  try {
+    const rooms = await Room.find({
+      $or: [{ isPrivate: false }, { members: req.user._id }],
+    })
+      .populate("createdBy", "username")
+      .populate("members", "username");
+
+    logger.info(`Retrieved ${rooms.length} rooms for user ${req.user._id}`);
+
+    res.status(200).json({
+      status: "success",
+      results: rooms.length,
+      data: {
+        rooms,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error fetching user rooms: ${error.message}`, { error });
+    next(new AppError("Error fetching user rooms", 500));
   }
 };

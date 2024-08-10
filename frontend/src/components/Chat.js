@@ -22,7 +22,7 @@ function Chat() {
   const { state, dispatch } = useChatContext();
   const { joinRoom, sendMessage, deleteMessage, sendTypingStatus } =
     useChatSocket();
-  const { fetchMessages, fetchUsername, fetchRooms, createRoom } = useChatApi();
+  const { fetchMessages, fetchUsername, fetchRooms } = useChatApi();
   const messagesEndRef = useRef(null);
   const prevMessageCountRef = useRef(0);
   const navigate = useNavigate();
@@ -69,15 +69,6 @@ function Chat() {
     }
   };
 
-  const handleCreateRoom = async (roomName) => {
-    try {
-      const newRoom = await createRoom({ name: roomName });
-      handleRoomChange(newRoom._id);
-    } catch (error) {
-      console.error("Failed to create room:", error);
-    }
-  };
-
   const handleEditMessage = (messageId, content) => {
     dispatch({ type: "SET_EDITING_MESSAGE_ID", payload: messageId });
     setEditingMessageContent(content);
@@ -107,7 +98,6 @@ function Chat() {
         rooms={state.rooms}
         currentRoom={state.currentRoom}
         onRoomChange={handleRoomChange}
-        onCreateRoom={handleCreateRoom}
       />
       <ChatMain>
         <ChatHeader

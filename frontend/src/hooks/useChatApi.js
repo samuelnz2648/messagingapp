@@ -52,9 +52,12 @@ export function useChatApi() {
 
   const fetchRooms = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5001/api/rooms", {
-        headers: { Authorization: `Bearer ${state.token}` },
-      });
+      const response = await axios.get(
+        "http://localhost:5001/api/auth/user-rooms",
+        {
+          headers: { Authorization: `Bearer ${state.token}` },
+        }
+      );
       console.log("Fetched rooms:", response.data.data.rooms);
       dispatch({ type: "SET_ROOMS", payload: response.data.data.rooms });
     } catch (error) {
@@ -122,6 +125,19 @@ export function useChatApi() {
     [state.token]
   );
 
+  const fetchAllUsers = useCallback(async () => {
+    try {
+      const response = await axios.get("http://localhost:5001/api/auth/users", {
+        headers: { Authorization: `Bearer ${state.token}` },
+      });
+      console.log("Fetched all users:", response.data.data.users);
+      return response.data.data.users;
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      throw error;
+    }
+  }, [state.token]);
+
   return {
     fetchMessages,
     fetchUsername,
@@ -129,5 +145,6 @@ export function useChatApi() {
     createRoom,
     joinRoom,
     leaveRoom,
+    fetchAllUsers,
   };
 }

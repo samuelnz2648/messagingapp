@@ -2,15 +2,17 @@
 
 import React, { useState } from "react";
 import RoomList from "./RoomList";
-import CreateRoomModal from "./CreateRoomModal"; // New component for the popup
+import CreateRoomModal from "./CreateRoomModal";
+import { useChatApi } from "../hooks/useChatApi";
 import {
   ChatSidebar as StyledChatSidebar,
   ChatHeader,
   CreateRoomButton,
 } from "../styles/ChatStyles";
 
-function ChatSidebar({ rooms, currentRoom, onRoomChange, onCreateRoom }) {
+function ChatSidebar({ rooms, currentRoom, onRoomChange }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { fetchRooms } = useChatApi();
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -20,11 +22,9 @@ function ChatSidebar({ rooms, currentRoom, onRoomChange, onCreateRoom }) {
     setIsModalOpen(false);
   };
 
-  const handleCreateRoom = (roomName) => {
-    if (roomName.trim()) {
-      onCreateRoom(roomName.trim());
-      setIsModalOpen(false);
-    }
+  const handleCreateRoom = async (newRoom) => {
+    await fetchRooms(); // Refresh the rooms list
+    onRoomChange(newRoom._id);
   };
 
   return (
