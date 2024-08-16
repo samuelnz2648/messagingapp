@@ -45,6 +45,7 @@ function chatReducer(state, action) {
       return { ...state, rooms: action.payload };
     case "ADD_ROOM":
       if (!state.rooms.some((room) => room._id === action.payload._id)) {
+        console.log("Adding new room:", action.payload);
         return { ...state, rooms: [...state.rooms, action.payload] };
       }
       return state;

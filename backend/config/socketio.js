@@ -15,6 +15,13 @@ module.exports = (io) => {
     logger.info(
       `New client connected: ${socket.id}, User: ${socket.user.username}`
     );
+
+    // Join a room with the user's ID
+    socket.join(socket.user._id.toString());
+    logger.info(
+      `User ${socket.user.username} joined room: ${socket.user._id.toString()}`
+    );
+
     userSockets.set(socket.id, socket.user);
 
     // Attach event handlers

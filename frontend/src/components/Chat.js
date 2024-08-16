@@ -29,6 +29,10 @@ function Chat() {
   const [editingMessageContent, setEditingMessageContent] = useState("");
 
   useEffect(() => {
+    console.log("Rooms updated:", state.rooms);
+  }, [state.rooms]);
+
+  useEffect(() => {
     const token = state.token || localStorage.getItem("token");
     if (!token) {
       navigate("/login");

@@ -6,7 +6,7 @@ import { useChatContext } from "../contexts/ChatContext";
 
 export function useChatSocket() {
   const { state, dispatch } = useChatContext();
-  const { token, currentRoom, userId } = state;
+  const { token, currentRoom } = state;
   const socketRef = useRef(null);
 
   const initializeSocket = useCallback(() => {
@@ -83,11 +83,9 @@ export function useChatSocket() {
 
     socketRef.current.on("newRoom", (roomData) => {
       console.log("Received newRoom event:", roomData);
-      if (!roomData.isPrivate || roomData.room.members.includes(userId)) {
         dispatch({ type: "ADD_ROOM", payload: roomData.room });
-      }
     });
-  }, [token, dispatch, currentRoom, userId]);
+  }, [token, dispatch, currentRoom]);
 
   useEffect(() => {
     initializeSocket();
