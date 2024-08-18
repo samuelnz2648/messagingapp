@@ -83,9 +83,14 @@ export function useChatSocket() {
 
     socketRef.current.on("newRoom", (roomData) => {
       console.log("Received newRoom event:", roomData);
+      if (
+        !roomData.isPrivate ||
+        (roomData.isPrivate && roomData.members.includes(state.userId))
+      ) {
         dispatch({ type: "ADD_ROOM", payload: roomData.room });
+      }
     });
-  }, [token, dispatch, currentRoom]);
+  }, [token, dispatch, currentRoom, state.userId]);
 
   useEffect(() => {
     initializeSocket();

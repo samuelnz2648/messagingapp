@@ -10,6 +10,7 @@ const initialState = {
   currentRoom: null,
   connected: false,
   username: "",
+  userId: null,
   isSending: false,
   editingMessageId: null,
   token: null,
@@ -57,6 +58,8 @@ function chatReducer(state, action) {
         : state;
     case "SET_CONNECTED":
       return { ...state, connected: action.payload };
+    case "SET_USER_ID":
+      return { ...state, userId: action.payload };
     case "SET_USERNAME":
       return { ...state, username: action.payload };
     case "SET_IS_SENDING":

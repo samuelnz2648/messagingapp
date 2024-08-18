@@ -40,13 +40,17 @@ export function useChatApi() {
       const response = await axios.get("http://localhost:5001/api/auth/user", {
         headers: { Authorization: `Bearer ${state.token}` },
       });
-      console.log("Fetched username:", response.data.data.user.username);
+      console.log("Fetched user data:", response.data.data.user);
       dispatch({
         type: "SET_USERNAME",
         payload: response.data.data.user.username,
       });
+      dispatch({
+        type: "SET_USER_ID",
+        payload: response.data.data.user._id,
+      });
     } catch (error) {
-      console.error("Error fetching username:", error);
+      console.error("Error fetching user data:", error);
     }
   }, [state.token, dispatch]);
 

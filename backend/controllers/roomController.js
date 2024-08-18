@@ -45,27 +45,18 @@ exports.createRoom = async (req, res, next) => {
       const roomData = {
         room: newRoom,
         isPrivate: newRoom.isPrivate,
+        members: newRoom.members,
         createdBy: req.user.username,
       };
 
-      if (newRoom.isPrivate) {
-        // For private rooms, emit only to room members
-        newRoom.members.forEach((memberId) => {
-          io.to(memberId.toString()).emit("newRoom", roomData);
-        });
-        // Log the emission for debugging
-        logger.info(
-          `Emitted newRoom event for private room ${
-            newRoom._id
-          } to members: ${newRoom.members.join(", ")}`
-        );
-      } else {
-        // For public rooms, emit to all connected clients
-        io.emit("newRoom", roomData);
-        logger.info(
-          `Emitted newRoom event for public room ${newRoom._id} to all clients`
-        );
-      }
+      // Emit to all connected clients
+      io.emit("newRoom", roomData);
+
+      logger.info(
+        `Emitted newRoom event for ${
+          newRoom.isPrivate ? "private" : "public"
+        } room ${newRoom._id} to all clients`
+      );
     } else {
       logger.warn("Socket.io instance not found when creating a room");
     }
