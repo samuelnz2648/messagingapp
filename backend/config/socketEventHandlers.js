@@ -5,7 +5,7 @@ const Room = require("../models/Room");
 const { saveMessage } = require("../controllers/messageController");
 const logger = require("../utils/logger");
 
-exports.attachHandlers = (io, socket, userSockets) => {
+exports.attachHandlers = (io, socket) => {
   socket.on("joinRoom", handleJoinRoom(io, socket));
   socket.on("leaveRoom", handleLeaveRoom(io, socket));
   socket.on("chatMessage", handleChatMessage(io, socket));
