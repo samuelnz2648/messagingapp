@@ -92,7 +92,7 @@ export function ChatProvider({ children }) {
   const [state, dispatch] = useReducer(chatReducer, initialState);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       dispatch({ type: "SET_TOKEN", payload: token });
     }

@@ -38,7 +38,7 @@ function Login() {
       console.log("Login response:", response.data);
 
       const { token } = response.data;
-      localStorage.setItem("token", token);
+      sessionStorage.setItem("token", token);
       dispatch({ type: "SET_TOKEN", payload: token });
       navigate("/chat");
     } catch (error) {

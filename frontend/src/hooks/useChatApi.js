@@ -4,17 +4,18 @@ import { useCallback } from "react";
 import axios from "axios";
 import { useChatContext } from "../contexts/ChatContext";
 
-export function useChatApi() {
+export function useChatApi(navigate) {
   const { state, dispatch } = useChatContext();
 
   const fetchMessages = useCallback(
     async (roomId) => {
       try {
         console.log("Fetching messages for room:", roomId);
+        const token = state.token || sessionStorage.getItem("token");
         const response = await axios.get(
           `http://localhost:5001/api/messages/${roomId}`,
           {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         console.log("Fetched messages:", response.data.data.messages);
@@ -27,18 +28,23 @@ export function useChatApi() {
         if (error.response && error.response.status === 429) {
           console.log("Rate limit exceeded. Retrying in 5 seconds...");
           setTimeout(() => fetchMessages(roomId), 5000);
+        } else if (error.response && error.response.status === 401) {
+          sessionStorage.removeItem("token");
+          dispatch({ type: "RESET" });
+          navigate("/login");
         } else if (error.message === "Network Error") {
           console.error("Network error: Unable to connect to the server");
         }
       }
     },
-    [state.token, dispatch]
+    [dispatch, navigate]
   );
 
   const fetchUsername = useCallback(async () => {
     try {
+      const token = state.token || sessionStorage.getItem("token");
       const response = await axios.get("http://localhost:5001/api/auth/user", {
-        headers: { Authorization: `Bearer ${state.token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Fetched user data:", response.data.data.user);
       dispatch({
@@ -51,32 +57,44 @@ export function useChatApi() {
       });
     } catch (error) {
       console.error("Error fetching user data:", error);
+      if (error.response && error.response.status === 401) {
+        sessionStorage.removeItem("token");
+        dispatch({ type: "RESET" });
+        navigate("/login");
+      }
     }
-  }, [state.token, dispatch]);
+  }, [dispatch, navigate]);
 
   const fetchRooms = useCallback(async () => {
     try {
+      const token = state.token || sessionStorage.getItem("token");
       const response = await axios.get(
         "http://localhost:5001/api/auth/user-rooms",
         {
-          headers: { Authorization: `Bearer ${state.token}` },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       console.log("Fetched rooms:", response.data.data.rooms);
       dispatch({ type: "SET_ROOMS", payload: response.data.data.rooms });
     } catch (error) {
       console.error("Error fetching rooms:", error);
+      if (error.response && error.response.status === 401) {
+        sessionStorage.removeItem("token");
+        dispatch({ type: "RESET" });
+        navigate("/login");
+      }
     }
-  }, [state.token, dispatch]);
+  }, [dispatch, navigate]);
 
   const createRoom = useCallback(
     async (roomData) => {
       try {
+        const token = state.token || sessionStorage.getItem("token");
         const response = await axios.post(
           "http://localhost:5001/api/rooms",
           roomData,
           {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         console.log("Created room:", response.data.data.room);
@@ -84,63 +102,86 @@ export function useChatApi() {
         return response.data.data.room;
       } catch (error) {
         console.error("Error creating room:", error);
+        if (error.response && error.response.status === 401) {
+          sessionStorage.removeItem("token");
+          dispatch({ type: "RESET" });
+          navigate("/login");
+        }
         throw error;
       }
     },
-    [state.token, dispatch]
+    [dispatch, navigate]
   );
 
   const joinRoom = useCallback(
     async (roomId) => {
       try {
+        const token = state.token || sessionStorage.getItem("token");
         const response = await axios.post(
           `http://localhost:5001/api/rooms/${roomId}/join`,
           {},
           {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         console.log("Joined room:", response.data.data.room);
         return response.data.data.room;
       } catch (error) {
         console.error("Error joining room:", error);
+        if (error.response && error.response.status === 401) {
+          sessionStorage.removeItem("token");
+          dispatch({ type: "RESET" });
+          navigate("/login");
+        }
         throw error;
       }
     },
-    [state.token]
+    [dispatch, navigate]
   );
 
   const leaveRoom = useCallback(
     async (roomId) => {
       try {
+        const token = state.token || sessionStorage.getItem("token");
         await axios.post(
           `http://localhost:5001/api/rooms/${roomId}/leave`,
           {},
           {
-            headers: { Authorization: `Bearer ${state.token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         console.log("Left room:", roomId);
       } catch (error) {
         console.error("Error leaving room:", error);
+        if (error.response && error.response.status === 401) {
+          sessionStorage.removeItem("token");
+          dispatch({ type: "RESET" });
+          navigate("/login");
+        }
         throw error;
       }
     },
-    [state.token]
+    [dispatch, navigate]
   );
 
   const fetchAllUsers = useCallback(async () => {
     try {
+      const token = state.token || sessionStorage.getItem("token");
       const response = await axios.get("http://localhost:5001/api/auth/users", {
-        headers: { Authorization: `Bearer ${state.token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Fetched all users:", response.data.data.users);
       return response.data.data.users;
     } catch (error) {
       console.error("Error fetching all users:", error);
+      if (error.response && error.response.status === 401) {
+        sessionStorage.removeItem("token");
+        dispatch({ type: "RESET" });
+        navigate("/login");
+      }
       throw error;
     }
-  }, [state.token]);
+  }, [dispatch, navigate]);
 
   return {
     fetchMessages,

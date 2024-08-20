@@ -19,13 +19,13 @@ import {
 } from "../styles/ChatStyles";
 
 function Chat() {
+  const navigate = useNavigate();
   const { state, dispatch } = useChatContext();
   const { joinRoom, sendMessage, deleteMessage, sendTypingStatus } =
     useChatSocket();
-  const { fetchMessages, fetchUsername, fetchRooms } = useChatApi();
+  const { fetchMessages, fetchUsername, fetchRooms } = useChatApi(navigate);
   const messagesEndRef = useRef(null);
   const prevMessageCountRef = useRef(0);
-  const navigate = useNavigate();
   const [editingMessageContent, setEditingMessageContent] = useState("");
 
   useEffect(() => {
@@ -33,7 +33,7 @@ function Chat() {
   }, [state.rooms]);
 
   useEffect(() => {
-    const token = state.token || localStorage.getItem("token");
+    const token = state.token || sessionStorage.getItem("token");
     if (!token) {
       navigate("/login");
     } else {
@@ -43,7 +43,7 @@ function Chat() {
       fetchUsername();
       fetchRooms();
     }
-  }, [state.token, navigate, fetchUsername, fetchRooms, dispatch]);
+  }, []);
 
   useEffect(() => {
     if (state.connected && state.currentRoom && !state.currentRoom.joined) {
@@ -91,7 +91,7 @@ function Chat() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     dispatch({ type: "RESET" });
     navigate("/login");
   };
