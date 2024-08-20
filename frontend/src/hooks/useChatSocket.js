@@ -90,6 +90,14 @@ export function useChatSocket() {
         dispatch({ type: "ADD_ROOM", payload: roomData.room });
       }
     });
+
+    socketRef.current.on("messageRead", ({ messageId, userId }) => {
+      console.log(`Message ${messageId} read by user ${userId}`);
+      dispatch({
+        type: "UPDATE_MESSAGE_READ_STATUS",
+        payload: { messageId, userId },
+      });
+    });
   }, [token, dispatch, currentRoom, state.userId]);
 
   useEffect(() => {
@@ -178,5 +186,19 @@ export function useChatSocket() {
     [state.currentRoom]
   );
 
-  return { joinRoom, leaveRoom, sendMessage, deleteMessage, sendTypingStatus };
+  const markMessageAsRead = useCallback((messageId) => {
+    if (socketRef.current && socketRef.current.connected) {
+      console.log(`Marking message ${messageId} as read`);
+      socketRef.current.emit("markMessageRead", { messageId });
+    }
+  }, []);
+
+  return {
+    joinRoom,
+    leaveRoom,
+    sendMessage,
+    deleteMessage,
+    sendTypingStatus,
+    markMessageAsRead,
+  };
 }

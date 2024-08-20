@@ -36,4 +36,7 @@ router.get("/:room", messageLimiter, (req, res, next) => {
   messageController.getMessages(req, res, next);
 });
 
+// Mark a message as read
+router.post("/:messageId/read", messageController.markMessageAsRead);
+
 module.exports = router;

@@ -148,3 +148,7 @@ export const TypingIndicator = styled.div.attrs({
   animation: ${typingAnimation} 1.5s ease-in-out infinite;
   transition: opacity 0.3s ease-in-out;
 `;
+
+export const ReadReceipt = styled.div.attrs({
+  className: "text-xs text-gray-500 mt-1",
+})``;

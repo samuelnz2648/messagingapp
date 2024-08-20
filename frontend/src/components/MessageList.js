@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/components/MessageList.js
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   MessageWrapper,
   MessageContent,
@@ -9,11 +9,28 @@ import {
   EditButton,
   DeleteButton,
   MessageItem,
+  ReadReceipt,
 } from "../styles/ChatStyles";
 
 const Message = React.memo(
-  ({ msg, username, onDeleteMessage, onEditMessage }) => {
+  ({
+    msg,
+    username,
+    onDeleteMessage,
+    onEditMessage,
+    onMarkAsRead,
+    currentUserId,
+  }) => {
     const isOwnMessage = msg.sender.username === username;
+
+    useEffect(() => {
+      if (
+        !isOwnMessage &&
+        !msg.readBy.some((read) => read.user._id === currentUserId)
+      ) {
+        onMarkAsRead(msg._id);
+      }
+    }, [msg._id, msg.readBy, isOwnMessage, currentUserId, onMarkAsRead]);
 
     return (
       <MessageItem $isDeleting={msg.isDeleting}>
@@ -24,6 +41,12 @@ const Message = React.memo(
             </MessageSender>
             {msg.content}
             {msg.isEdited && <span className="edited-tag"> (edited)</span>}
+            {isOwnMessage && (
+              <ReadReceipt>
+                Read by: {msg.readBy.length}{" "}
+                {msg.readBy.length === 1 ? "user" : "users"}
+              </ReadReceipt>
+            )}
           </MessageContent>
           {isOwnMessage && (
             <MessageActions>
@@ -41,7 +64,14 @@ const Message = React.memo(
   }
 );
 
-function MessageList({ messages, username, onDeleteMessage, onEditMessage }) {
+function MessageList({
+  messages,
+  username,
+  onDeleteMessage,
+  onEditMessage,
+  onMarkAsRead,
+  currentUserId,
+}) {
   return (
     <>
       {messages.map((msg) => (
@@ -51,6 +81,8 @@ function MessageList({ messages, username, onDeleteMessage, onEditMessage }) {
           username={username}
           onDeleteMessage={onDeleteMessage}
           onEditMessage={onEditMessage}
+          onMarkAsRead={onMarkAsRead}
+          currentUserId={currentUserId}
         />
       ))}
     </>

@@ -12,6 +12,7 @@ exports.attachHandlers = (io, socket) => {
   socket.on("editMessage", handleEditMessage(io, socket));
   socket.on("deleteMessage", handleDeleteMessage(io, socket));
   socket.on("typing", handleTyping(io, socket));
+  socket.on("markMessageRead", handleMarkMessageRead(io, socket));
 };
 
 const handleJoinRoom = (io, socket) => async (roomId) => {
@@ -186,4 +187,32 @@ const handleTyping = (io, socket) => (data) => {
     username: socket.user.username,
     isTyping,
   });
+};
+
+const handleMarkMessageRead = (io, socket) => async (data) => {
+  try {
+    const { messageId } = data;
+    const userId = socket.user._id;
+
+    logger.info(`Marking message ${messageId} as read for user ${userId}`);
+
+    const message = await Message.findById(messageId);
+    if (message) {
+      const wasNewlyMarked = await message.markAsRead(userId);
+      if (wasNewlyMarked) {
+        io.to(message.room.toString()).emit("messageRead", {
+          messageId,
+          userId,
+        });
+        logger.info(`Message ${messageId} marked as read by user ${userId}`);
+      } else {
+        logger.info(`Message ${messageId} was already read by user ${userId}`);
+      }
+    } else {
+      logger.warn(`Attempt to mark non-existent message as read: ${messageId}`);
+    }
+  } catch (error) {
+    logger.error("Error marking message as read:", error);
+    socket.emit("error", { message: "Failed to mark message as read" });
+  }
 };

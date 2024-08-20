@@ -50,4 +50,35 @@ exports.getMessages = async (req, res, next) => {
   }
 };
 
+exports.markMessageAsRead = async (req, res, next) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      logger.warn(`Attempt to mark non-existent message as read: ${messageId}`);
+      return next(new AppError("Message not found", 404));
+    }
+
+    await message.markAsRead(userId);
+
+    // Emit a socket event to notify other users
+    const io = req.app.get("io");
+    io.to(message.room.toString()).emit("messageRead", { messageId, userId });
+
+    logger.info(`Message ${messageId} marked as read by user ${userId}`);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        message: "Message marked as read",
+      },
+    });
+  } catch (error) {
+    logger.error(`Error marking message as read: ${error.message}`, { error });
+    next(new AppError("Error marking message as read", 500));
+  }
+};
+
 module.exports = exports;

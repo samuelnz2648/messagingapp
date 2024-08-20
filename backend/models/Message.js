@@ -29,6 +29,18 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    readBy: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        readAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
@@ -85,6 +97,16 @@ messageSchema.pre("save", function (next) {
   }
   next();
 });
+
+messageSchema.methods.markAsRead = async function (userId) {
+  if (!this.readBy.some((read) => read.user.toString() === userId.toString())) {
+    this.readBy.push({ user: userId });
+    await this.save();
+    logger.info(`Message ${this._id} marked as read by user ${userId}`);
+    return true; // Indicate that the message was newly marked as read
+  }
+  return false; // Indicate that the message was already read by this user
+};
 
 const Message = mongoose.model("Message", messageSchema);
 

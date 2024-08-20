@@ -21,8 +21,13 @@ import {
 function Chat() {
   const navigate = useNavigate();
   const { state, dispatch } = useChatContext();
-  const { joinRoom, sendMessage, deleteMessage, sendTypingStatus } =
-    useChatSocket();
+  const {
+    joinRoom,
+    sendMessage,
+    deleteMessage,
+    sendTypingStatus,
+    markMessageAsRead,
+  } = useChatSocket();
   const { fetchMessages, fetchUsername, fetchRooms } = useChatApi(navigate);
   const messagesEndRef = useRef(null);
   const prevMessageCountRef = useRef(0);
@@ -43,7 +48,7 @@ function Chat() {
       fetchUsername();
       fetchRooms();
     }
-  }, []);
+  }, [state.token, dispatch, fetchUsername, fetchRooms, navigate]);
 
   useEffect(() => {
     if (state.connected && state.currentRoom && !state.currentRoom.joined) {
@@ -96,6 +101,16 @@ function Chat() {
     navigate("/login");
   };
 
+  const handleMarkAsRead = (messageId) => {
+    if (
+      !state.messages
+        .find((msg) => msg._id === messageId)
+        ?.readBy.includes(state.userId)
+    ) {
+      markMessageAsRead(messageId);
+    }
+  };
+
   return (
     <ChatContainer>
       <ChatSidebar
@@ -117,6 +132,8 @@ function Chat() {
                 username={state.username}
                 onDeleteMessage={handleDeleteMessage}
                 onEditMessage={handleEditMessage}
+                onMarkAsRead={handleMarkAsRead}
+                currentUserId={state.userId}
               />
               {state.typingUsers.length > 0 && (
                 <TypingIndicator>

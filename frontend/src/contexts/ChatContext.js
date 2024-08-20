@@ -83,6 +83,22 @@ function chatReducer(state, action) {
         updatedTypingUsers = state.typingUsers;
       }
       return { ...state, typingUsers: updatedTypingUsers };
+    case "UPDATE_MESSAGE_READ_STATUS":
+      return {
+        ...state,
+        messages: state.messages.map((msg) =>
+          msg._id === action.payload.messageId
+            ? {
+                ...msg,
+                readBy: msg.readBy.some(
+                  (read) => read.user._id === action.payload.userId
+                )
+                  ? msg.readBy
+                  : [...msg.readBy, { user: { _id: action.payload.userId } }],
+              }
+            : msg
+        ),
+      };
     default:
       return state;
   }
