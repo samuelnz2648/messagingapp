@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/components/MessageList.js
 
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import {
   MessageWrapper,
   MessageContent,
@@ -21,6 +21,7 @@ const Message = React.memo(
     onMarkAsRead,
     currentUserId,
   }) => {
+    const [isNewlyRead, setIsNewlyRead] = useState(false);
     const isOwnMessage = msg.sender.username === username;
 
     useEffect(() => {
@@ -31,6 +32,14 @@ const Message = React.memo(
         onMarkAsRead(msg._id);
       }
     }, [msg._id, msg.readBy, isOwnMessage, currentUserId, onMarkAsRead]);
+
+    useEffect(() => {
+      if (msg.readBy.length > 0 && isOwnMessage) {
+        setIsNewlyRead(true);
+        const timer = setTimeout(() => setIsNewlyRead(false), 2000); // Reset after 2 seconds
+        return () => clearTimeout(timer);
+      }
+    }, [msg.readBy, isOwnMessage]);
 
     const readByUsers = msg.readBy
       .filter((read) => read.user._id !== msg.sender._id)
@@ -53,7 +62,9 @@ const Message = React.memo(
             {msg.content}
             {msg.isEdited && <span className="edited-tag"> (edited)</span>}
             {isOwnMessage && readByUsers && (
-              <ReadReceipt>Read by: {readByUsers}</ReadReceipt>
+              <ReadReceipt $isNewlyRead={isNewlyRead}>
+                Read by: {readByUsers}
+              </ReadReceipt>
             )}
           </MessageContent>
           {isOwnMessage && (

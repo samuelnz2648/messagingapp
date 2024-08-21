@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/styles/ChatStyles.js
 
-import styled, { keyframes } from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 
 export const ChatContainer = styled.div.attrs({
   className: "flex h-screen bg-gray-100",
@@ -149,6 +149,28 @@ export const TypingIndicator = styled.div.attrs({
   transition: opacity 0.3s ease-in-out;
 `;
 
+const fadeInSlide = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 export const ReadReceipt = styled.div.attrs({
   className: "text-xs text-gray-500 mt-1",
-})``;
+})`
+  transition: all 0.3s ease-in-out;
+  animation: ${({ $isNewlyRead }) =>
+    $isNewlyRead
+      ? css`
+          ${fadeInSlide} 0.3s ease-out
+        `
+      : "none"};
+  opacity: ${({ $isNewlyRead }) => ($isNewlyRead ? 1 : 0.7)};
+  transform: ${({ $isNewlyRead }) =>
+    $isNewlyRead ? "scale(1.05)" : "scale(1)"};
+`;
