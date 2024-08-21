@@ -29,7 +29,8 @@ exports.getMessages = async (req, res, next) => {
     const messages = await Message.find({ room })
       .sort({ timestamp: 1 })
       .limit(limit)
-      .populate("sender", "username");
+      .populate("sender", "username")
+      .populate("readBy.user", "username");
 
     logger.info(`Retrieved ${messages.length} messages for room ${room}`);
 

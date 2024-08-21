@@ -193,20 +193,30 @@ const handleMarkMessageRead = (io, socket) => async (data) => {
   try {
     const { messageId } = data;
     const userId = socket.user._id;
+    const username = socket.user.username;
 
-    logger.info(`Marking message ${messageId} as read for user ${userId}`);
+    logger.info(
+      `Marking message ${messageId} as read for user ${userId} (${username})`
+    );
 
     const message = await Message.findById(messageId);
     if (message) {
       const wasNewlyMarked = await message.markAsRead(userId);
       if (wasNewlyMarked) {
+        await message.populate("readBy.user", "username");
         io.to(message.room.toString()).emit("messageRead", {
           messageId,
           userId,
+          username,
+          readBy: message.readBy,
         });
-        logger.info(`Message ${messageId} marked as read by user ${userId}`);
+        logger.info(
+          `Message ${messageId} marked as read by user ${userId} (${username})`
+        );
       } else {
-        logger.info(`Message ${messageId} was already read by user ${userId}`);
+        logger.info(
+          `Message ${messageId} was already read by user ${userId} (${username})`
+        );
       }
     } else {
       logger.warn(`Attempt to mark non-existent message as read: ${messageId}`);

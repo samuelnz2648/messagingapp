@@ -18,8 +18,12 @@ export function useChatSocket() {
       auth: { token },
     });
 
+    const logEvent = (eventName, data) => {
+      console.log(`Socket event: ${eventName}`, data);
+    };
+
     socketRef.current.on("connect", () => {
-      console.log("Socket connected");
+      logEvent("connect");
       dispatch({ type: "SET_CONNECTED", payload: true });
       if (currentRoom) {
         socketRef.current.emit("joinRoom", currentRoom._id);
@@ -27,62 +31,62 @@ export function useChatSocket() {
     });
 
     socketRef.current.on("disconnect", () => {
-      console.log("Socket disconnected");
+      logEvent("disconnect");
       dispatch({ type: "SET_CONNECTED", payload: false });
     });
 
     socketRef.current.on("message", (message) => {
-      console.log("Received message:", message);
+      logEvent("message", message);
       dispatch({ type: "ADD_MESSAGE", payload: message });
     });
 
     socketRef.current.on("messageUpdated", (updatedMessage) => {
-      console.log("Message updated:", updatedMessage);
+      logEvent("messageUpdated", updatedMessage);
       dispatch({ type: "UPDATE_MESSAGE", payload: updatedMessage });
     });
 
     socketRef.current.on("messageDeleting", (deletingMessageId) => {
-      console.log("Message deleting:", deletingMessageId);
+      logEvent("messageDeleting", deletingMessageId);
       dispatch({ type: "SET_MESSAGE_DELETING", payload: deletingMessageId });
     });
 
     socketRef.current.on("messageDeleted", (deletedMessageId) => {
-      console.log("Message deleted:", deletedMessageId);
+      logEvent("messageDeleted", deletedMessageId);
       dispatch({ type: "DELETE_MESSAGE", payload: deletedMessageId });
     });
 
     socketRef.current.on("roomJoined", ({ roomId, name }) => {
-      console.log(`Joined room: ${name} (${roomId})`);
+      logEvent("roomJoined", { roomId, name });
       dispatch({ type: "SET_ROOM_JOINED", payload: { _id: roomId, name } });
     });
 
     socketRef.current.on("roomLeft", ({ roomId, name }) => {
-      console.log(`Left room: ${name} (${roomId})`);
+      logEvent("roomLeft", { roomId, name });
       if (currentRoom && currentRoom._id === roomId) {
         dispatch({ type: "SET_CURRENT_ROOM", payload: null });
       }
     });
 
     socketRef.current.on("userJoined", ({ username }) => {
-      console.log(`User joined: ${username}`);
+      logEvent("userJoined", { username });
     });
 
     socketRef.current.on("userLeft", ({ username }) => {
-      console.log(`User left: ${username}`);
+      logEvent("userLeft", { username });
     });
 
     socketRef.current.on("userTyping", ({ username, isTyping }) => {
-      console.log(`User ${username} is ${isTyping ? "typing" : "not typing"}`);
+      logEvent("userTyping", { username, isTyping });
       dispatch({ type: "SET_USER_TYPING", payload: { username, isTyping } });
     });
 
     socketRef.current.on("newPublicRoom", (newRoom) => {
-      console.log("Received newPublicRoom event:", newRoom);
+      logEvent("newPublicRoom", newRoom);
       dispatch({ type: "ADD_ROOM", payload: newRoom });
     });
 
     socketRef.current.on("newRoom", (roomData) => {
-      console.log("Received newRoom event:", roomData);
+      logEvent("newRoom", roomData);
       if (
         !roomData.isPrivate ||
         (roomData.isPrivate && roomData.members.includes(state.userId))
@@ -91,11 +95,11 @@ export function useChatSocket() {
       }
     });
 
-    socketRef.current.on("messageRead", ({ messageId, userId }) => {
-      console.log(`Message ${messageId} read by user ${userId}`);
+    socketRef.current.on("messageRead", ({ messageId, userId, username }) => {
+      logEvent("messageRead", { messageId, userId, username });
       dispatch({
         type: "UPDATE_MESSAGE_READ_STATUS",
-        payload: { messageId, userId },
+        payload: { messageId, userId, username },
       });
     });
   }, [token, dispatch, currentRoom, state.userId]);
@@ -186,12 +190,21 @@ export function useChatSocket() {
     [state.currentRoom]
   );
 
-  const markMessageAsRead = useCallback((messageId) => {
-    if (socketRef.current && socketRef.current.connected) {
-      console.log(`Marking message ${messageId} as read`);
-      socketRef.current.emit("markMessageRead", { messageId });
-    }
-  }, []);
+  const markMessageAsRead = useCallback(
+    (messageId) => {
+      if (socketRef.current && socketRef.current.connected) {
+        console.log(
+          `Marking message ${messageId} as read by user ${state.userId}`
+        );
+        socketRef.current.emit("markMessageRead", {
+          messageId,
+          userId: state.userId,
+          username: state.username,
+        });
+      }
+    },
+    [state.userId, state.username]
+  );
 
   return {
     joinRoom,

@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/components/MessageList.js
 
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import {
   MessageWrapper,
   MessageContent,
@@ -32,6 +32,16 @@ const Message = React.memo(
       }
     }, [msg._id, msg.readBy, isOwnMessage, currentUserId, onMarkAsRead]);
 
+    const readByUsers = msg.readBy
+      .filter((read) => read.user._id !== msg.sender._id)
+      .map((read) => read.user.username)
+      .join(", ");
+
+    console.log("Message data:", msg);
+    console.log("Is own message:", isOwnMessage);
+    console.log("Read by users:", readByUsers);
+    console.log("Current user ID:", currentUserId);
+
     return (
       <MessageItem $isDeleting={msg.isDeleting}>
         <MessageWrapper $isOwnMessage={isOwnMessage}>
@@ -41,11 +51,8 @@ const Message = React.memo(
             </MessageSender>
             {msg.content}
             {msg.isEdited && <span className="edited-tag"> (edited)</span>}
-            {isOwnMessage && (
-              <ReadReceipt>
-                Read by: {msg.readBy.length}{" "}
-                {msg.readBy.length === 1 ? "user" : "users"}
-              </ReadReceipt>
+            {isOwnMessage && readByUsers && (
+              <ReadReceipt>Read by: {readByUsers}</ReadReceipt>
             )}
           </MessageContent>
           {isOwnMessage && (
@@ -72,6 +79,14 @@ function MessageList({
   onMarkAsRead,
   currentUserId,
 }) {
+  console.log("MessageList rendered with messages:", messages);
+
+  const memoizedOnDeleteMessage = useCallback(onDeleteMessage, [
+    onDeleteMessage,
+  ]);
+  const memoizedOnEditMessage = useCallback(onEditMessage, [onEditMessage]);
+  const memoizedOnMarkAsRead = useCallback(onMarkAsRead, [onMarkAsRead]);
+
   return (
     <>
       {messages.map((msg) => (
@@ -79,9 +94,9 @@ function MessageList({
           key={msg._id}
           msg={msg}
           username={username}
-          onDeleteMessage={onDeleteMessage}
-          onEditMessage={onEditMessage}
-          onMarkAsRead={onMarkAsRead}
+          onDeleteMessage={memoizedOnDeleteMessage}
+          onEditMessage={memoizedOnEditMessage}
+          onMarkAsRead={memoizedOnMarkAsRead}
           currentUserId={currentUserId}
         />
       ))}
