@@ -32,6 +32,16 @@ exports.getMessages = async (req, res, next) => {
       .populate("sender", "username")
       .populate("readBy.user", "username");
 
+    // Remove duplicate read receipts
+    messages.forEach((message) => {
+      message.readBy = message.readBy.filter(
+        (v, i, a) =>
+          a.findIndex(
+            (t) => t.user._id.toString() === v.user._id.toString()
+          ) === i
+      );
+    });
+
     logger.info(`Retrieved ${messages.length} messages for room ${room}`);
 
     res.status(200).json({
@@ -62,11 +72,12 @@ exports.markMessageAsRead = async (req, res, next) => {
       return next(new AppError("Message not found", 404));
     }
 
-    await message.markAsRead(userId);
-
-    // Emit a socket event to notify other users
-    const io = req.app.get("io");
-    io.to(message.room.toString()).emit("messageRead", { messageId, userId });
+    const wasNewlyMarked = await message.markAsRead(userId);
+    if (wasNewlyMarked) {
+      // Emit a socket event to notify other users only if it was newly marked
+      const io = req.app.get("io");
+      io.to(message.room.toString()).emit("messageRead", { messageId, userId });
+    }
 
     logger.info(`Message ${messageId} marked as read by user ${userId}`);
 

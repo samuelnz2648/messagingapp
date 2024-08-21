@@ -85,6 +85,14 @@ function chatReducer(state, action) {
       return { ...state, typingUsers: updatedTypingUsers };
     case "UPDATE_MESSAGE_READ_STATUS":
       console.log("Updating message read status:", action.payload);
+      console.log(
+        "Message before update:",
+        JSON.stringify(
+          state.messages.find((msg) => msg._id === action.payload.messageId),
+          null,
+          2
+        )
+      );
       const updatedMessages = state.messages.map((msg) =>
         msg._id === action.payload.messageId
           ? {
@@ -106,6 +114,14 @@ function chatReducer(state, action) {
           : msg
       );
       console.log("Updated messages:", updatedMessages);
+      console.log(
+        "Message after update:",
+        JSON.stringify(
+          updatedMessages.find((msg) => msg._id === action.payload.messageId),
+          null,
+          2
+        )
+      );
       return {
         ...state,
         messages: updatedMessages,

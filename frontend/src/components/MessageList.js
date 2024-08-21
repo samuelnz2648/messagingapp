@@ -41,6 +41,7 @@ const Message = React.memo(
     console.log("Is own message:", isOwnMessage);
     console.log("Read by users:", readByUsers);
     console.log("Current user ID:", currentUserId);
+    console.log("Full readBy array:", JSON.stringify(msg.readBy, null, 2));
 
     return (
       <MessageItem $isDeleting={msg.isDeleting}>
