@@ -174,3 +174,7 @@ export const ReadReceipt = styled.div.attrs({
   transform: ${({ $isNewlyRead }) =>
     $isNewlyRead ? "scale(1.05)" : "scale(1)"};
 `;
+
+export const SystemMessage = styled.div.attrs({
+  className: "text-center text-gray-500 text-sm my-2",
+})``;

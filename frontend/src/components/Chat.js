@@ -16,6 +16,7 @@ import {
   WelcomeMessage,
   ConnectionStatus,
   TypingIndicator,
+  SystemMessage
 } from "../styles/ChatStyles";
 
 function Chat() {
@@ -135,6 +136,11 @@ function Chat() {
                 onMarkAsRead={handleMarkAsRead}
                 currentUserId={state.userId}
               />
+              {state.systemMessages
+                .filter((msg) => msg.roomId === state.currentRoom._id)
+                .map((msg, index) => (
+                  <SystemMessage key={index}>{msg.content}</SystemMessage>
+                ))}
               {state.typingUsers.length > 0 && (
                 <TypingIndicator>
                   {state.typingUsers.join(", ")}{" "}

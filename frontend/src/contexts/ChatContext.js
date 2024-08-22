@@ -15,6 +15,7 @@ const initialState = {
   editingMessageId: null,
   token: null,
   typingUsers: [],
+  systemMessages: [],
 };
 
 function chatReducer(state, action) {
@@ -125,6 +126,11 @@ function chatReducer(state, action) {
       return {
         ...state,
         messages: updatedMessages,
+      };
+    case "ADD_SYSTEM_MESSAGE":
+      return {
+        ...state,
+        systemMessages: [...state.systemMessages, action.payload],
       };
     default:
       return state;

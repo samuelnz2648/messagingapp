@@ -54,6 +54,13 @@ const handleJoinRoom = (io, socket) => async (roomId) => {
 
     socket.join(roomId);
     socket.emit("roomJoined", { roomId, name: room.name });
+
+    // Add this line to emit a custom event when a user joins
+    io.to(roomId).emit("userJoinedRoom", {
+      username: socket.user.username,
+      roomId,
+    });
+
     io.to(roomId).emit("userJoined", { username: socket.user.username });
   } catch (error) {
     logger.error(`Error joining room: ${error.message}`, { error });

@@ -102,6 +102,14 @@ export function useChatSocket() {
         payload: { messageId, userId, username },
       });
     });
+
+    socketRef.current.on("userJoinedRoom", ({ username, roomId }) => {
+      logEvent("userJoinedRoom", { username, roomId });
+      dispatch({
+        type: "ADD_SYSTEM_MESSAGE",
+        payload: { content: `${username} has joined the room`, roomId },
+      });
+    });
   }, [token, dispatch, currentRoom, state.userId]);
 
   useEffect(() => {
