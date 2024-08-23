@@ -130,7 +130,7 @@ function chatReducer(state, action) {
     case "ADD_SYSTEM_MESSAGE":
       return {
         ...state,
-        systemMessages: [...state.systemMessages, action.payload],
+        messages: [...state.messages, { ...action.payload, type: "system" }],
       };
     default:
       return state;

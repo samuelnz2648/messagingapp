@@ -67,10 +67,6 @@ export function useChatSocket() {
       }
     });
 
-    socketRef.current.on("userJoined", ({ username }) => {
-      logEvent("userJoined", { username });
-    });
-
     socketRef.current.on("userLeft", ({ username }) => {
       logEvent("userLeft", { username });
     });
@@ -107,7 +103,12 @@ export function useChatSocket() {
       logEvent("userJoinedRoom", { username, roomId });
       dispatch({
         type: "ADD_SYSTEM_MESSAGE",
-        payload: { content: `${username} has joined the room`, roomId },
+        payload: {
+          content: `${username} has joined the room`,
+          roomId,
+          timestamp: new Date().toISOString(),
+          _id: Date.now().toString(),
+        },
       });
     });
   }, [token, dispatch, currentRoom, state.userId]);

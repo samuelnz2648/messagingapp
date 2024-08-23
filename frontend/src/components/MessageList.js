@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/components/MessageList.js
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback } from "react";
 import {
   MessageWrapper,
   MessageContent,
@@ -10,6 +10,7 @@ import {
   DeleteButton,
   MessageItem,
   ReadReceipt,
+  SystemMessage,
 } from "../styles/ChatStyles";
 
 const Message = React.memo(
@@ -21,36 +22,33 @@ const Message = React.memo(
     onMarkAsRead,
     currentUserId,
   }) => {
-    const [isNewlyRead, setIsNewlyRead] = useState(false);
-    const isOwnMessage = msg.sender.username === username;
+    const isOwnMessage = msg.sender && msg.sender.username === username;
 
     useEffect(() => {
       if (
         !isOwnMessage &&
+        msg.sender &&
         !msg.readBy.some((read) => read.user._id === currentUserId)
       ) {
         onMarkAsRead(msg._id);
       }
-    }, [msg._id, msg.readBy, isOwnMessage, currentUserId, onMarkAsRead]);
+    }, [
+      msg._id,
+      msg.readBy,
+      msg.sender,
+      isOwnMessage,
+      currentUserId,
+      onMarkAsRead,
+    ]);
 
-    useEffect(() => {
-      if (msg.readBy.length > 0 && isOwnMessage) {
-        setIsNewlyRead(true);
-        const timer = setTimeout(() => setIsNewlyRead(false), 2000); // Reset after 2 seconds
-        return () => clearTimeout(timer);
-      }
-    }, [msg.readBy, isOwnMessage]);
+    if (msg.type === "system") {
+      return <SystemMessage>{msg.content}</SystemMessage>;
+    }
 
     const readByUsers = msg.readBy
       .filter((read) => read.user._id !== msg.sender._id)
       .map((read) => read.user.username)
       .join(", ");
-
-    console.log("Message data:", msg);
-    console.log("Is own message:", isOwnMessage);
-    console.log("Read by users:", readByUsers);
-    console.log("Current user ID:", currentUserId);
-    console.log("Full readBy array:", JSON.stringify(msg.readBy, null, 2));
 
     return (
       <MessageItem $isDeleting={msg.isDeleting}>
@@ -62,9 +60,7 @@ const Message = React.memo(
             {msg.content}
             {msg.isEdited && <span className="edited-tag"> (edited)</span>}
             {isOwnMessage && readByUsers && (
-              <ReadReceipt $isNewlyRead={isNewlyRead}>
-                Read by: {readByUsers}
-              </ReadReceipt>
+              <ReadReceipt>Read by: {readByUsers}</ReadReceipt>
             )}
           </MessageContent>
           {isOwnMessage && (
@@ -103,7 +99,7 @@ function MessageList({
     <>
       {messages.map((msg) => (
         <Message
-          key={msg._id}
+          key={msg._id || `${msg.type}-${msg.timestamp}`}
           msg={msg}
           username={username}
           onDeleteMessage={memoizedOnDeleteMessage}
