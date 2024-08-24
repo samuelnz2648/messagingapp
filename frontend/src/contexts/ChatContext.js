@@ -37,12 +37,38 @@ function chatReducer(state, action) {
         ),
       };
     case "UPDATE_MESSAGE":
-      return {
+      console.log(
+        "Before update:",
+        state.messages.find((m) => m._id === action.payload._id)
+      );
+      console.log("Update payload:", action.payload);
+      const updatedState = {
         ...state,
         messages: state.messages
-          .map((msg) => (msg._id === action.payload._id ? action.payload : msg))
+          .map((msg) =>
+            msg._id === action.payload._id
+              ? {
+                  ...msg,
+                  ...action.payload,
+                  readBy: action.payload.readBy
+                    ? Array.from(
+                        new Map(
+                          [...msg.readBy, ...action.payload.readBy].map(
+                            (item) => [item.user._id, item]
+                          )
+                        ).values()
+                      )
+                    : msg.readBy,
+                }
+              : msg
+          )
           .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)),
       };
+      console.log(
+        "After update:",
+        updatedState.messages.find((m) => m._id === action.payload._id)
+      );
+      return updatedState;
     case "SET_MESSAGE_DELETING":
       return {
         ...state,

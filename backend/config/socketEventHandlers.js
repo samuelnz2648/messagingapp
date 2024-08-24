@@ -140,7 +140,10 @@ const handleEditMessage = (io, socket) => async (data) => {
     message.isEdited = true;
     await message.save();
 
-    const updatedMessage = await message.populate("sender", "username");
+    const updatedMessage = await message.populate([
+      { path: "sender", select: "username" },
+      { path: "readBy.user", select: "username" },
+    ]);
     logger.info(
       `Broadcasting updated message to room ${room}: ${updatedMessage}`
     );
