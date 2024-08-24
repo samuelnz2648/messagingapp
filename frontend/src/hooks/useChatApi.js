@@ -22,7 +22,7 @@ export function useChatApi(navigate) {
         const sortedMessages = response.data.data.messages.sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
         );
-        dispatch({ type: "SET_MESSAGES", payload: sortedMessages });
+        dispatch({ type: "ADD_MESSAGES", payload: sortedMessages });
       } catch (error) {
         console.error("Error fetching messages:", error);
         if (error.response && error.response.status === 429) {
@@ -37,7 +37,7 @@ export function useChatApi(navigate) {
         }
       }
     },
-    [dispatch, navigate]
+    [dispatch, navigate, state.token]
   );
 
   const fetchUsername = useCallback(async () => {
@@ -63,7 +63,7 @@ export function useChatApi(navigate) {
         navigate("/login");
       }
     }
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, state.token]);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -84,7 +84,7 @@ export function useChatApi(navigate) {
         navigate("/login");
       }
     }
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, state.token]);
 
   const createRoom = useCallback(
     async (roomData) => {
@@ -110,7 +110,7 @@ export function useChatApi(navigate) {
         throw error;
       }
     },
-    [dispatch, navigate]
+    [dispatch, navigate, state.token]
   );
 
   const joinRoom = useCallback(
@@ -136,7 +136,7 @@ export function useChatApi(navigate) {
         throw error;
       }
     },
-    [dispatch, navigate]
+    [dispatch, navigate, state.token]
   );
 
   const leaveRoom = useCallback(
@@ -161,7 +161,7 @@ export function useChatApi(navigate) {
         throw error;
       }
     },
-    [dispatch, navigate]
+    [dispatch, navigate, state.token]
   );
 
   const fetchAllUsers = useCallback(async () => {
@@ -181,7 +181,7 @@ export function useChatApi(navigate) {
       }
       throw error;
     }
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, state.token]);
 
   return {
     fetchMessages,

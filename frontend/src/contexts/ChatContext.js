@@ -15,7 +15,7 @@ const initialState = {
   editingMessageId: null,
   token: null,
   typingUsers: [],
-  systemMessages: [],
+  socket: null,
 };
 
 function chatReducer(state, action) {
@@ -23,7 +23,19 @@ function chatReducer(state, action) {
     case "SET_MESSAGES":
       return { ...state, messages: action.payload };
     case "ADD_MESSAGE":
-      return { ...state, messages: [...state.messages, action.payload] };
+      return {
+        ...state,
+        messages: [...state.messages, action.payload].sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        ),
+      };
+    case "ADD_MESSAGES":
+      return {
+        ...state,
+        messages: [...state.messages, ...action.payload].sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        ),
+      };
     case "UPDATE_MESSAGE":
       return {
         ...state,
@@ -85,15 +97,6 @@ function chatReducer(state, action) {
       }
       return { ...state, typingUsers: updatedTypingUsers };
     case "UPDATE_MESSAGE_READ_STATUS":
-      console.log("Updating message read status:", action.payload);
-      console.log(
-        "Message before update:",
-        JSON.stringify(
-          state.messages.find((msg) => msg._id === action.payload.messageId),
-          null,
-          2
-        )
-      );
       const updatedMessages = state.messages.map((msg) =>
         msg._id === action.payload.messageId
           ? {
@@ -114,24 +117,12 @@ function chatReducer(state, action) {
             }
           : msg
       );
-      console.log("Updated messages:", updatedMessages);
-      console.log(
-        "Message after update:",
-        JSON.stringify(
-          updatedMessages.find((msg) => msg._id === action.payload.messageId),
-          null,
-          2
-        )
-      );
       return {
         ...state,
         messages: updatedMessages,
       };
-    case "ADD_SYSTEM_MESSAGE":
-      return {
-        ...state,
-        messages: [...state.messages, { ...action.payload, type: "system" }],
-      };
+    case "SET_SOCKET":
+      return { ...state, socket: action.payload };
     default:
       return state;
   }

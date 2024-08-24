@@ -99,7 +99,7 @@ function MessageList({
     <>
       {messages.map((msg) => (
         <Message
-          key={msg._id || `${msg.type}-${msg.timestamp}`}
+          key={msg._id || `${msg.type}-${msg.timestamp}-${Math.random()}`}
           msg={msg}
           username={username}
           onDeleteMessage={memoizedOnDeleteMessage}

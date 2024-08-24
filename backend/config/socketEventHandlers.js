@@ -59,6 +59,7 @@ const handleJoinRoom = (io, socket) => async (roomId) => {
     io.to(roomId).emit("userJoinedRoom", {
       username: socket.user.username,
       roomId,
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     logger.error(`Error joining room: ${error.message}`, { error });
@@ -79,7 +80,11 @@ const handleLeaveRoom = (io, socket) => async (roomId) => {
     );
     socket.leave(roomId);
     socket.emit("roomLeft", { roomId, name: room.name });
-    io.to(roomId).emit("userLeft", { username: socket.user.username });
+    io.to(roomId).emit("userLeft", {
+      username: socket.user.username,
+      roomId,
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
     logger.error(`Error leaving room: ${error.message}`, { error });
     socket.emit("roomError", { error: "Failed to leave room" });

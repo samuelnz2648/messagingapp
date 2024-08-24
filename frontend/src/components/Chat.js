@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/components/Chat.js
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChatContext } from "../contexts/ChatContext";
 import { useChatSocket } from "../hooks/useChatSocket";
@@ -16,7 +16,6 @@ import {
   WelcomeMessage,
   ConnectionStatus,
   TypingIndicator,
-  SystemMessage
 } from "../styles/ChatStyles";
 
 function Chat() {
@@ -136,11 +135,6 @@ function Chat() {
                 onMarkAsRead={handleMarkAsRead}
                 currentUserId={state.userId}
               />
-              {state.systemMessages
-                .filter((msg) => msg.roomId === state.currentRoom._id)
-                .map((msg, index) => (
-                  <SystemMessage key={index}>{msg.content}</SystemMessage>
-                ))}
               {state.typingUsers.length > 0 && (
                 <TypingIndicator>
                   {state.typingUsers.join(", ")}{" "}

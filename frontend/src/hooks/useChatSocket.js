@@ -18,6 +18,8 @@ export function useChatSocket() {
       auth: { token },
     });
 
+    dispatch({ type: "SET_SOCKET", payload: socketRef.current });
+
     const logEvent = (eventName, data) => {
       console.log(`Socket event: ${eventName}`, data);
     };
@@ -99,15 +101,33 @@ export function useChatSocket() {
       });
     });
 
-    socketRef.current.on("userJoinedRoom", ({ username, roomId }) => {
-      logEvent("userJoinedRoom", { username, roomId });
+    socketRef.current.on(
+      "userJoinedRoom",
+      ({ username, roomId, timestamp }) => {
+        logEvent("userJoinedRoom", { username, roomId, timestamp });
+        dispatch({
+          type: "ADD_MESSAGE",
+          payload: {
+            _id: `system-${timestamp}-${Math.random()}`,
+            content: `${username} has joined the room`,
+            timestamp,
+            type: "system",
+            room: roomId,
+          },
+        });
+      }
+    );
+
+    socketRef.current.on("userLeft", ({ username, roomId, timestamp }) => {
+      logEvent("userLeft", { username, roomId, timestamp });
       dispatch({
-        type: "ADD_SYSTEM_MESSAGE",
+        type: "ADD_MESSAGE",
         payload: {
-          content: `${username} has joined the room`,
-          roomId,
-          timestamp: new Date().toISOString(),
-          _id: Date.now().toString(),
+          _id: `system-${timestamp}-${Math.random()}`,
+          content: `${username} has left the room`,
+          timestamp,
+          type: "system",
+          room: roomId,
         },
       });
     });
