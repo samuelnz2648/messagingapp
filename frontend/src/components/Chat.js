@@ -1,6 +1,6 @@
 // messagingapp/frontend/src/components/Chat.js
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChatContext } from "../contexts/ChatContext";
 import { useChatSocket } from "../hooks/useChatSocket";
