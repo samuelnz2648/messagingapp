@@ -18,9 +18,19 @@ export function useChatApi(navigate) {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log("Fetched messages:", response.data.data.messages);
+        console.log(
+          "Fetched messages:",
+          response.data.data.messages.map((m) => ({
+            id: m._id,
+            content: m.content,
+          }))
+        );
         const sortedMessages = response.data.data.messages.sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        );
+        console.log(
+          "Dispatching ADD_MESSAGES with:",
+          sortedMessages.map((m) => ({ id: m._id, content: m.content }))
         );
         dispatch({ type: "ADD_MESSAGES", payload: sortedMessages });
       } catch (error) {

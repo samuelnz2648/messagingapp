@@ -23,6 +23,7 @@ function chatReducer(state, action) {
     case "SET_MESSAGES":
       return { ...state, messages: action.payload };
     case "ADD_MESSAGE":
+      console.log("Adding single message:", action.payload);
       return {
         ...state,
         messages: [...state.messages, action.payload].sort(
@@ -30,45 +31,40 @@ function chatReducer(state, action) {
         ),
       };
     case "ADD_MESSAGES":
+      console.log("Adding multiple messages:", action.payload);
+      const newMessages = action.payload.filter(
+        (newMsg) =>
+          !state.messages.some((existingMsg) => existingMsg._id === newMsg._id)
+      );
+      console.log("New messages to be added:", newMessages);
       return {
         ...state,
-        messages: [...state.messages, ...action.payload].sort(
+        messages: [...state.messages, ...newMessages].sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
         ),
       };
     case "UPDATE_MESSAGE":
-      console.log(
-        "Before update:",
-        state.messages.find((m) => m._id === action.payload._id)
-      );
-      console.log("Update payload:", action.payload);
-      const updatedState = {
+      console.log("Updating message:", action.payload);
+      return {
         ...state,
-        messages: state.messages
-          .map((msg) =>
-            msg._id === action.payload._id
-              ? {
-                  ...msg,
-                  ...action.payload,
-                  readBy: action.payload.readBy
-                    ? Array.from(
-                        new Map(
-                          [...msg.readBy, ...action.payload.readBy].map(
-                            (item) => [item.user._id, item]
-                          )
-                        ).values()
-                      )
-                    : msg.readBy,
-                }
-              : msg
-          )
-          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)),
+        messages: state.messages.map((msg) =>
+          msg._id === action.payload._id
+            ? {
+                ...msg,
+                ...action.payload,
+                readBy: action.payload.readBy
+                  ? Array.from(
+                      new Map(
+                        [...msg.readBy, ...action.payload.readBy].map(
+                          (item) => [item.user._id, item]
+                        )
+                      ).values()
+                    )
+                  : msg.readBy,
+              }
+            : msg
+        ),
       };
-      console.log(
-        "After update:",
-        updatedState.messages.find((m) => m._id === action.payload._id)
-      );
-      return updatedState;
     case "SET_MESSAGE_DELETING":
       return {
         ...state,
@@ -123,29 +119,28 @@ function chatReducer(state, action) {
       }
       return { ...state, typingUsers: updatedTypingUsers };
     case "UPDATE_MESSAGE_READ_STATUS":
-      const updatedMessages = state.messages.map((msg) =>
-        msg._id === action.payload.messageId
-          ? {
-              ...msg,
-              readBy: msg.readBy.some(
-                (read) => read.user._id === action.payload.userId
-              )
-                ? msg.readBy
-                : [
-                    ...msg.readBy,
-                    {
-                      user: {
-                        _id: action.payload.userId,
-                        username: action.payload.username,
-                      },
-                    },
-                  ],
-            }
-          : msg
-      );
       return {
         ...state,
-        messages: updatedMessages,
+        messages: state.messages.map((msg) =>
+          msg._id === action.payload.messageId
+            ? {
+                ...msg,
+                readBy: msg.readBy.some(
+                  (read) => read.user._id === action.payload.userId
+                )
+                  ? msg.readBy
+                  : [
+                      ...msg.readBy,
+                      {
+                        user: {
+                          _id: action.payload.userId,
+                          username: action.payload.username,
+                        },
+                      },
+                    ],
+              }
+            : msg
+        ),
       };
     case "SET_SOCKET":
       return { ...state, socket: action.payload };

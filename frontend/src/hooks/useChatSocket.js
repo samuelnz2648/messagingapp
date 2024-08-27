@@ -38,7 +38,10 @@ export function useChatSocket() {
     });
 
     socketRef.current.on("message", (message) => {
-      logEvent("message", message);
+      console.log("Received real-time message:", {
+        id: message._id,
+        content: message.content,
+      });
       dispatch({ type: "ADD_MESSAGE", payload: message });
     });
 
@@ -76,11 +79,6 @@ export function useChatSocket() {
     socketRef.current.on("userTyping", ({ username, isTyping }) => {
       logEvent("userTyping", { username, isTyping });
       dispatch({ type: "SET_USER_TYPING", payload: { username, isTyping } });
-    });
-
-    socketRef.current.on("newPublicRoom", (newRoom) => {
-      logEvent("newPublicRoom", newRoom);
-      dispatch({ type: "ADD_ROOM", payload: newRoom });
     });
 
     socketRef.current.on("newRoom", (roomData) => {

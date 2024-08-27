@@ -104,7 +104,11 @@ const handleChatMessage = (io, socket) => async (data) => {
 
     await savedMessage.populate("sender", "username");
 
-    logger.info(`Broadcasting message to room ${data.room}: ${savedMessage}`);
+    logger.info(`Broadcasting message to room ${data.room}:`, {
+      messageId: savedMessage._id,
+      content: savedMessage.content,
+      sender: savedMessage.sender.username,
+    });
     io.in(data.room).emit("message", savedMessage);
   } catch (error) {
     logger.error("Error saving message:", error);

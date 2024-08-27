@@ -8,7 +8,11 @@ exports.saveMessage = async (messageData) => {
   try {
     const message = new Message(messageData);
     await message.save();
-    logger.info(`Message saved successfully: ${message._id}`);
+    logger.info(`Message saved successfully: ${message._id}`, {
+      messageContent: message.content,
+      sender: message.sender,
+      room: message.room,
+    });
     return message.populate("sender", "username");
   } catch (error) {
     logger.error(`Error saving message: ${error.message}`, { error });
@@ -42,7 +46,9 @@ exports.getMessages = async (req, res, next) => {
       );
     });
 
-    logger.info(`Retrieved ${messages.length} messages for room ${room}`);
+    logger.info(`Retrieved ${messages.length} messages for room ${room}`, {
+      messageIds: messages.map((m) => m._id.toString()),
+    });
 
     res.status(200).json({
       status: "success",
