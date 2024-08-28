@@ -55,11 +55,19 @@ const handleJoinRoom = (io, socket) => async (roomId) => {
     socket.join(roomId);
     socket.emit("roomJoined", { roomId, name: room.name });
 
+    // Create and save system message for user joining
+    const joinMessage = await saveMessage({
+      content: `${socket.user.username} has joined the room`,
+      room: roomId,
+      type: "system",
+    });
+
     // Emit userJoinedRoom event for all users, including the room creator
     io.to(roomId).emit("userJoinedRoom", {
       username: socket.user.username,
       roomId,
       timestamp: new Date().toISOString(),
+      message: joinMessage,
     });
   } catch (error) {
     logger.error(`Error joining room: ${error.message}`, { error });

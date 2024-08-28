@@ -23,6 +23,8 @@ export function useChatApi(navigate) {
           response.data.data.messages.map((m) => ({
             id: m._id,
             content: m.content,
+            type: m.type,
+            sender: m.sender ? m.sender.username : "System",
           }))
         );
         const sortedMessages = response.data.data.messages.sort(
@@ -30,7 +32,12 @@ export function useChatApi(navigate) {
         );
         console.log(
           "Dispatching ADD_MESSAGES with:",
-          sortedMessages.map((m) => ({ id: m._id, content: m.content }))
+          sortedMessages.map((m) => ({
+            id: m._id,
+            content: m.content,
+            type: m.type,
+            sender: m.sender ? m.sender.username : "System",
+          }))
         );
         dispatch({ type: "ADD_MESSAGES", payload: sortedMessages });
       } catch (error) {
@@ -49,7 +56,7 @@ export function useChatApi(navigate) {
     },
     [dispatch, navigate, state.token]
   );
-
+  
   const fetchUsername = useCallback(async () => {
     try {
       const token = state.token || sessionStorage.getItem("token");

@@ -8,7 +8,9 @@ const messageSchema = new mongoose.Schema(
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "A message must have a sender"],
+      required: function () {
+        return this.type !== "system";
+      },
     },
     room: {
       type: mongoose.Schema.Types.ObjectId,
@@ -41,6 +43,11 @@ const messageSchema = new mongoose.Schema(
         },
       },
     ],
+    type: {
+      type: String,
+      enum: ["user", "system"],
+      default: "user",
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -61,7 +68,7 @@ messageSchema.virtual("senderInfo", {
 
 // Instance method to check if the message is from a specific user
 messageSchema.methods.isFromUser = function (userId) {
-  return this.sender.toString() === userId.toString();
+  return this.type === "user" && this.sender.toString() === userId.toString();
 };
 
 // Static method to get recent messages from a room
@@ -91,7 +98,7 @@ messageSchema.statics.getRecentMessages = async function (roomId, limit = 50) {
 
 // Middleware to run before saving
 messageSchema.pre("save", function (next) {
-  if (this.isModified("content") && !this.isNew) {
+  if (this.type === "user" && this.isModified("content") && !this.isNew) {
     this.isEdited = true;
     logger.info(`Message edited: ${this._id}`);
   }
@@ -99,7 +106,10 @@ messageSchema.pre("save", function (next) {
 });
 
 messageSchema.methods.markAsRead = async function (userId) {
-  if (!this.readBy.some((read) => read.user.toString() === userId.toString())) {
+  if (
+    this.type === "user" &&
+    !this.readBy.some((read) => read.user.toString() === userId.toString())
+  ) {
     this.readBy.push({ user: userId });
     await this.save();
     logger.info(`Message ${this._id} marked as read by user ${userId}`);
