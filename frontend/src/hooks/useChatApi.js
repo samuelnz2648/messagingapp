@@ -24,7 +24,7 @@ export function useChatApi(navigate) {
             id: m._id,
             content: m.content,
             type: m.type,
-            sender: m.sender ? m.sender.username : "System",
+            sender: m.sender ? m.sender.username : null,
           }))
         );
         const sortedMessages = response.data.data.messages.sort(
@@ -36,7 +36,7 @@ export function useChatApi(navigate) {
             id: m._id,
             content: m.content,
             type: m.type,
-            sender: m.sender ? m.sender.username : "System",
+            sender: m.sender ? m.sender.username : null,
           }))
         );
         dispatch({ type: "ADD_MESSAGES", payload: sortedMessages });
@@ -56,7 +56,7 @@ export function useChatApi(navigate) {
     },
     [dispatch, navigate, state.token]
   );
-  
+
   const fetchUsername = useCallback(async () => {
     try {
       const token = state.token || sessionStorage.getItem("token");

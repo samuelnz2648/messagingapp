@@ -101,18 +101,11 @@ export function useChatSocket() {
 
     socketRef.current.on(
       "userJoinedRoom",
-      ({ username, roomId, timestamp }) => {
-        logEvent("userJoinedRoom", { username, roomId, timestamp });
-        dispatch({
-          type: "ADD_MESSAGE",
-          payload: {
-            _id: `system-${timestamp}-${Math.random()}`,
-            content: `${username} has joined the room`,
-            timestamp,
-            type: "system",
-            room: roomId,
-          },
-        });
+      ({ username, roomId, timestamp, message }) => {
+        logEvent("userJoinedRoom", { username, roomId, timestamp, message });
+        if (message) {
+          dispatch({ type: "ADD_MESSAGE", payload: message });
+        }
       }
     );
 
