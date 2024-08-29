@@ -61,6 +61,8 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom }) {
     );
   };
 
+  const otherUsers = allUsers.filter((user) => user._id !== state.userId);
+
   if (!isOpen) return null;
 
   return (
@@ -96,10 +98,13 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom }) {
             {isPrivate && (
               <FormField>
                 <Label>Select User(s)</Label>
-                <Select multiple>
-                  {allUsers
-                    .filter((user) => user._id !== state.userId)
-                    .map((user) => (
+                {otherUsers.length === 0 ? (
+                  <div className="text-gray-500 italic">
+                    No other users are registered
+                  </div>
+                ) : (
+                  <Select multiple>
+                    {otherUsers.map((user) => (
                       <CheckboxWrapper key={user._id}>
                         <input
                           type="checkbox"
@@ -112,7 +117,8 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom }) {
                         </label>
                       </CheckboxWrapper>
                     ))}
-                </Select>
+                  </Select>
+                )}
               </FormField>
             )}
           </form>
