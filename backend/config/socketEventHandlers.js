@@ -91,10 +91,20 @@ const handleLeaveRoom = (io, socket) => async (roomId) => {
     );
     socket.leave(roomId);
     socket.emit("roomLeft", { roomId, name: room.name });
-    io.to(roomId).emit("userLeft", {
+
+    // Create and save system message for user leaving
+    const leaveMessage = await saveMessage({
+      content: `${socket.user.username} has left the room`,
+      room: roomId,
+      type: "system",
+    });
+
+    // Emit userLeftRoom event for all users in the room
+    io.to(roomId).emit("userLeftRoom", {
       username: socket.user.username,
       roomId,
       timestamp: new Date().toISOString(),
+      message: leaveMessage,
     });
   } catch (error) {
     logger.error(`Error leaving room: ${error.message}`, { error });

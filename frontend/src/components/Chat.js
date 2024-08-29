@@ -27,6 +27,7 @@ function Chat() {
     deleteMessage,
     sendTypingStatus,
     markMessageAsRead,
+    socketRef,
   } = useChatSocket();
   const { fetchMessages, fetchUsername, fetchRooms } = useChatApi(navigate);
   const messagesEndRef = useRef(null);
@@ -70,6 +71,10 @@ function Chat() {
       newRoom &&
       (!state.currentRoom || newRoom._id !== state.currentRoom._id)
     ) {
+      if (state.currentRoom) {
+        // Emit leaveRoom event for the current room
+        socketRef.current.emit("leaveRoom", state.currentRoom._id);
+      }
       dispatch({ type: "SET_MESSAGES", payload: [] });
       dispatch({
         type: "SET_CURRENT_ROOM",

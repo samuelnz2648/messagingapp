@@ -109,6 +109,16 @@ export function useChatSocket() {
       }
     );
 
+    socketRef.current.on(
+      "userLeftRoom",
+      ({ username, roomId, timestamp, message }) => {
+        logEvent("userLeftRoom", { username, roomId, timestamp, message });
+        if (message) {
+          dispatch({ type: "ADD_MESSAGE", payload: message });
+        }
+      }
+    );
+
     socketRef.current.on("userLeft", ({ username, roomId, timestamp }) => {
       logEvent("userLeft", { username, roomId, timestamp });
       dispatch({
@@ -233,5 +243,6 @@ export function useChatSocket() {
     deleteMessage,
     sendTypingStatus,
     markMessageAsRead,
+    socketRef,
   };
 }
