@@ -101,6 +101,9 @@ function Chat() {
   };
 
   const handleLogout = () => {
+    if (state.currentRoom) {
+      socketRef.current.emit("leaveRoom", state.currentRoom._id);
+    }
     sessionStorage.removeItem("token");
     dispatch({ type: "RESET" });
     navigate("/login");

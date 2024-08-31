@@ -8,6 +8,7 @@ export function useChatSocket() {
   const { state, dispatch } = useChatContext();
   const { token, currentRoom } = state;
   const socketRef = useRef(null);
+  const lastJoinTimestamp = useRef(null);
 
   const initializeSocket = useCallback(() => {
     if (!token) return;
@@ -38,10 +39,7 @@ export function useChatSocket() {
     });
 
     socketRef.current.on("message", (message) => {
-      console.log("Received real-time message:", {
-        id: message._id,
-        content: message.content,
-      });
+      logEvent("message", message);
       dispatch({ type: "ADD_MESSAGE", payload: message });
     });
 
@@ -72,10 +70,6 @@ export function useChatSocket() {
       }
     });
 
-    socketRef.current.on("userLeft", ({ username }) => {
-      logEvent("userLeft", { username });
-    });
-
     socketRef.current.on("userTyping", ({ username, isTyping }) => {
       logEvent("userTyping", { username, isTyping });
       dispatch({ type: "SET_USER_TYPING", payload: { username, isTyping } });
@@ -103,8 +97,16 @@ export function useChatSocket() {
       "userJoinedRoom",
       ({ username, roomId, timestamp, message }) => {
         logEvent("userJoinedRoom", { username, roomId, timestamp, message });
-        if (message) {
-          dispatch({ type: "ADD_MESSAGE", payload: message });
+        const now = Date.now();
+        // Only process the join message if it's been more than 5 seconds since the last one
+        if (
+          !lastJoinTimestamp.current ||
+          now - lastJoinTimestamp.current > 5000
+        ) {
+          if (message) {
+            dispatch({ type: "ADD_MESSAGE", payload: message });
+          }
+          lastJoinTimestamp.current = now;
         }
       }
     );
@@ -118,20 +120,6 @@ export function useChatSocket() {
         }
       }
     );
-
-    socketRef.current.on("userLeft", ({ username, roomId, timestamp }) => {
-      logEvent("userLeft", { username, roomId, timestamp });
-      dispatch({
-        type: "ADD_MESSAGE",
-        payload: {
-          _id: `system-${timestamp}-${Math.random()}`,
-          content: `${username} has left the room`,
-          timestamp,
-          type: "system",
-          room: roomId,
-        },
-      });
-    });
   }, [token, dispatch, currentRoom, state.userId]);
 
   useEffect(() => {
@@ -155,7 +143,9 @@ export function useChatSocket() {
 
   const leaveRoom = useCallback((roomId) => {
     console.log("Leaving room:", roomId);
-    socketRef.current.emit("leaveRoom", roomId);
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("leaveRoom", roomId);
+    }
   }, []);
 
   const sendMessage = useCallback(

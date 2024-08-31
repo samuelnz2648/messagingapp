@@ -58,20 +58,30 @@ const handleJoinRoom = (io, socket) => async (roomId) => {
     socket.join(roomId);
     socket.emit("roomJoined", { roomId, name: room.name });
 
-    // Create and save system message for user joining
-    const joinMessage = await saveMessage({
-      content: `${socket.user.username} has joined the room`,
+    // Check if there's already a join message for this user in the last 5 seconds
+    const recentJoinMessage = await Message.findOne({
       room: roomId,
       type: "system",
+      content: `${socket.user.username} has joined the room`,
+      createdAt: { $gte: new Date(Date.now() - 5000) },
     });
 
-    // Emit userJoinedRoom event for all users, including the room creator
-    io.to(roomId).emit("userJoinedRoom", {
-      username: socket.user.username,
-      roomId,
-      timestamp: new Date().toISOString(),
-      message: joinMessage,
-    });
+    if (!recentJoinMessage) {
+      // Create and save system message for user joining
+      const joinMessage = await saveMessage({
+        content: `${socket.user.username} has joined the room`,
+        room: roomId,
+        type: "system",
+      });
+
+      // Emit userJoinedRoom event for all users, including the room creator
+      io.to(roomId).emit("userJoinedRoom", {
+        username: socket.user.username,
+        roomId,
+        timestamp: new Date().toISOString(),
+        message: joinMessage,
+      });
+    }
   } catch (error) {
     logger.error(`Error joining room: ${error.message}`, { error });
     socket.emit("roomError", { error: "Failed to join room" });
